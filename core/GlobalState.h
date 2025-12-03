@@ -31,7 +31,6 @@ class TypeMemberRef;
 class NameSubstitution;
 class ErrorQueue;
 struct LocalSymbolTableHashes;
-class SymbolTableOffsets;
 
 namespace lsp {
 class Task;
@@ -233,6 +232,82 @@ public:
     }
 };
 
+template <typename T> class SymbolRange;
+
+template <typename T> class SymbolIterator {
+    friend class SymbolRange<T>;
+
+    uint32_t ix;
+
+    SymbolIterator(uint32_t ix) : ix{ix} {}
+
+public:
+    T operator*() {
+        return T::fromRaw(this->ix);
+    }
+
+    bool operator==(const SymbolIterator other) const {
+        return this->ix == other.ix;
+    }
+
+    bool operator!=(const SymbolIterator other) const {
+        return this->ix != other.ix;
+    }
+
+    SymbolIterator operator++() {
+        ++this->ix;
+        return *this;
+    }
+};
+
+template <typename T> class SymbolRange {
+    friend class SymbolTableOffsets;
+
+    const uint32_t _begin;
+    const uint32_t _end;
+
+    SymbolRange(uint32_t _begin, uint32_t _end) : _begin{_begin}, _end{_end} {}
+
+public:
+    using iterator = SymbolIterator<T>;
+
+    SymbolRange() = delete;
+
+    iterator begin() {
+        return SymbolIterator<T>{this->_begin};
+    }
+
+    iterator end() {
+        return SymbolIterator<T>{this->_end};
+    }
+};
+
+// A snapshot of the size of all of GlobalState's symbol tables at a point in time.
+class ymbolTableOffsets {
+    // The defaults of `1` are because all of our symbol tables reserve index `0` for the invalid entry, so all valid
+    // indices will start at offset `1` into their respective vector.
+    unsigned int classAndModulesOffset = 1;
+    unsigned int methodsOffset = 1;
+    unsigned int fieldsOffset = 1;
+    unsigned int typeMembersOffset = 1;
+    unsigned int typeParametersOffset = 1;
+
+public:
+    SymbolTableOffsets() = default;
+
+    explicit SymbolTableOffsets(const GlobalState &gs);
+
+    SymbolRange<ClassOrModuleRef> classOrModuleRefs(const GlobalState &gs) const;
+
+    SymbolRange<MethodRef> methodRefs(const GlobalState &gs) const;
+
+    SymbolRange<FieldRef> fieldRefs(const GlobalState &gs) const;
+
+    SymbolRange<TypeMemberRef> typeMemberRefs(const GlobalState &gs) const;
+
+    SymbolRange<TypeParameterRef> typeParameterRefs(const GlobalState &gs) const;
+};
+
 class GlobalState final {
     friend NameRef;
     friend ClassOrModule;
@@ -282,7 +357,7 @@ public:
 
     void initEmpty();
     void installIntrinsics();
-    void computeLinearization(const SymbolTableOffsets &offsets);
+    void computeLinearization();
 
     // Expand symbol and name tables to the given lengths. Does nothing if the value is <= current capacity.
     void preallocateTables(uint32_t classAndModulesSize, uint32_t methodsSize, uint32_t fieldsSize,
@@ -589,6 +664,14 @@ public:
 
     bool shouldReportErrorOn(FileRef file, ErrorClass what) const;
 
+    const SymbolTableOffsets &newSymbols() const {
+        return this->offsets;
+    }
+
+    void updateSymbolTableOffsets() {
+        this->offsets = SymbolTableOffsets(*this);
+    }
+
 private:
     struct DeepCloneHistoryEntry {
         int globalStateId;
@@ -628,6 +711,8 @@ private:
     bool symbolTableFrozen = true;
     bool fileTableFrozen = true;
 
+    SymbolTableOffsets offsets;
+
     // Copy options over from another GlobalState. Private, as it's only meant to be used as a helper to implement other
     // copying strategies.
     void copyOptions(const GlobalState &other);
@@ -643,93 +728,6 @@ private:
 };
 // CheckSize(GlobalState, 152, 8);
 // Historically commented out because size of unordered_map was different between different versions of stdlib
-
-template <typename T> class SymbolRange;
-
-template <typename T> class SymbolIterator {
-    friend class SymbolRange<T>;
-
-    uint32_t ix;
-
-    SymbolIterator(uint32_t ix) : ix{ix} {}
-
-public:
-    T operator*() {
-        return T::fromRaw(this->ix);
-    }
-
-    bool operator==(const SymbolIterator other) const {
-        return this->ix == other.ix;
-    }
-
-    bool operator!=(const SymbolIterator other) const {
-        return this->ix != other.ix;
-    }
-
-    SymbolIterator operator++() {
-        ++this->ix;
-        return *this;
-    }
-};
-
-template <typename T> class SymbolRange {
-    friend class SymbolTableOffsets;
-
-    const uint32_t _begin;
-    const uint32_t _end;
-
-    SymbolRange(uint32_t _begin, uint32_t _end) : _begin{_begin}, _end{_end} {}
-
-public:
-    using iterator = SymbolIterator<T>;
-
-    SymbolRange() = delete;
-
-    iterator begin() {
-        return SymbolIterator<T>{this->_begin};
-    }
-
-    iterator end() {
-        return SymbolIterator<T>{this->_end};
-    }
-};
-
-// A snapshot of the size of all of GlobalState's symbol tables at a point in time.
-class SymbolTableOffsets {
-    unsigned int classAndModulesOffset = 1;
-    unsigned int methodsOffset = 1;
-    unsigned int fieldsOffset = 1;
-    unsigned int typeMembersOffset = 1;
-    unsigned int typeParametersOffset = 1;
-
-public:
-    SymbolTableOffsets() = default;
-
-    explicit SymbolTableOffsets(const GlobalState &gs)
-        : classAndModulesOffset{gs.classAndModulesUsed()}, methodsOffset{gs.methodsUsed()},
-          fieldsOffset{gs.fieldsUsed()}, typeMembersOffset{gs.typeMembersUsed()}, typeParametersOffset{
-                                                                                      gs.typeParametersUsed()} {}
-
-    SymbolRange<ClassOrModuleRef> classOrModuleRefs(const GlobalState &gs) const {
-        return SymbolRange<ClassOrModuleRef>(this->classAndModulesOffset, gs.classAndModulesUsed());
-    }
-
-    SymbolRange<MethodRef> methodRefs(const GlobalState &gs) const {
-        return SymbolRange<MethodRef>(this->methodsOffset, gs.methodsUsed());
-    }
-
-    SymbolRange<FieldRef> fieldRefs(const GlobalState &gs) const {
-        return SymbolRange<FieldRef>(this->fieldsOffset, gs.fieldsUsed());
-    }
-
-    SymbolRange<TypeMemberRef> typeMemberRefs(const GlobalState &gs) const {
-        return SymbolRange<TypeMemberRef>(this->typeMembersOffset, gs.typeMembersUsed());
-    }
-
-    SymbolRange<TypeParameterRef> typeParameterRefs(const GlobalState &gs) const {
-        return SymbolRange<TypeParameterRef>(this->typeParametersOffset, gs.typeParametersUsed());
-    }
-};
 
 } // namespace sorbet::core
 

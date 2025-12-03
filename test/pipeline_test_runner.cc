@@ -514,8 +514,7 @@ TEST_CASE("PerPhaseTest") { // NOLINT
     } else {
         core::UnfreezeNameTable nameTableAccess(*gs);     // Resolver::defineAttr
         core::UnfreezeSymbolTable symbolTableAccess(*gs); // enters stubs
-        core::SymbolTableOffsets offsets;
-        trees = move(resolver::Resolver::run(*gs, move(trees), *workers, offsets).result());
+        trees = move(resolver::Resolver::run(*gs, move(trees), *workers).result());
 
         if (opts.cacheSensitiveOptions.sorbetPackages) {
             trees = packager::VisibilityChecker::run(*gs, *workers, move(trees));

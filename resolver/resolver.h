@@ -6,16 +6,12 @@
 #include <memory>
 #include <optional>
 
-namespace sorbet::core {
-class SymbolTableOffsets;
-}
-
 namespace sorbet::resolver {
 
 class Resolver final {
 public:
     static ast::ParsedFilesOrCancelled run(core::GlobalState &gs, std::vector<ast::ParsedFile> trees,
-                                           WorkerPool &workers, const core::SymbolTableOffsets &offsets);
+                                           WorkerPool &workers);
     Resolver() = delete;
 
     /**
@@ -34,11 +30,11 @@ public:
     static std::vector<ast::ParsedFile> runConstantResolution(core::GlobalState &gs, std::vector<ast::ParsedFile> trees,
                                                               WorkerPool &workers);
 
-    static void finalizeSymbols(core::GlobalState &gs, const core::SymbolTableOffsets &offsets,
+    static void finalizeSymbols(core::GlobalState &gs,
                                 std::optional<absl::Span<const core::ClassOrModuleRef>> symbolsToRecompute);
 
 private:
-    static void finalizeAncestors(core::GlobalState &gs, const core::SymbolTableOffsets &offsets);
+    static void finalizeAncestors(core::GlobalState &gs);
 };
 
 } // namespace sorbet::resolver
