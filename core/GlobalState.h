@@ -283,7 +283,7 @@ public:
 };
 
 // A snapshot of the size of all of GlobalState's symbol tables at a point in time.
-class ymbolTableOffsets {
+class SymbolTableOffsets {
     // The defaults of `1` are because all of our symbol tables reserve index `0` for the invalid entry, so all valid
     // indices will start at offset `1` into their respective vector.
     unsigned int classAndModulesOffset = 1;
@@ -298,6 +298,11 @@ public:
     explicit SymbolTableOffsets(const GlobalState &gs);
 
     SymbolRange<ClassOrModuleRef> classOrModuleRefs(const GlobalState &gs) const;
+
+    // Was this symbol defined in the set defined by these offsets?
+    bool includes(ClassOrModuleRef ref) const {
+        return this->classAndModulesOffset <= ref.id();
+    }
 
     SymbolRange<MethodRef> methodRefs(const GlobalState &gs) const;
 
