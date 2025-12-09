@@ -993,7 +993,7 @@ void GlobalState::computeLinearization() {
     Timer timer(this->tracer(), "resolver.compute_linearization");
 
     // TODO: this does not support `prepend`
-    for (auto ref : this->newSymbols().classOrModuleRefs(*this)) {
+    for (auto ref : this->newClassOrModules()) {
         computeClassLinearization(*this, ref);
     }
 }
@@ -2064,7 +2064,7 @@ unique_ptr<GlobalState> GlobalState::deepCopyGlobalState(bool keepId) const {
         Timer timeit2(tracer(), "GlobalState::deepCopyOut");
         result->creation = timeit2.getFlowEdge();
     }
-    result->offsets = this->offsets;
+    result->symbolOffsets = this->symbolOffsets;
     return result;
 }
 

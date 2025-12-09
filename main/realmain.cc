@@ -673,8 +673,8 @@ int realmain(int argc, char *argv[]) {
                 }
             }
 
-            // Update offsets for the next iteration. We do this at the end of the loop to ensure that the first
-            // iteration includes all of the payload symbols.
+            // Update offsets for the next stratum we process. We do this at the end of this loop to ensure that the
+            // first loop iteration includes all of the payload symbols.
             gs->updateSymbolTableOffsets();
         }
 

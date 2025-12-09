@@ -669,12 +669,37 @@ public:
 
     bool shouldReportErrorOn(FileRef file, ErrorClass what) const;
 
+    // The set of classes or modules that have been introduced in the current stratum.
+    SymbolRange<ClassOrModuleRef> newClassOrModules() const {
+        return this->symbolOffsets.classOrModuleRefs(*this);
+    }
+
+    // The set of methods that have been introduced in the current stratum.
+    SymbolRange<MethodRef> newMethods() const {
+        return this->symbolOffsets.methodRefs(*this);
+    }
+
+    // The set of fields that have been introduced in the current stratum.
+    SymbolRange<FieldRef> newFields() const {
+        return this->symbolOffsets.fieldRefs(*this);
+    }
+
+    // The set of type members that have been introduced in the current stratum.
+    SymbolRange<TypeMemberRef> newTypeMembers() const {
+        return this->symbolOffsets.typeMemberRefs(*this);
+    }
+
+    // The set of type parameters that have been introduced in the current stratum.
+    SymbolRange<TypeParameterRef> newTypeParameters() const {
+        return this->symbolOffsets.typeParameterRefs(*this);
+    }
+
     const SymbolTableOffsets &newSymbols() const {
-        return this->offsets;
+        return this->symbolOffsets;
     }
 
     void updateSymbolTableOffsets() {
-        this->offsets = SymbolTableOffsets(*this);
+        this->symbolOffsets = SymbolTableOffsets(*this);
     }
 
 private:
@@ -716,7 +741,7 @@ private:
     bool symbolTableFrozen = true;
     bool fileTableFrozen = true;
 
-    SymbolTableOffsets offsets;
+    SymbolTableOffsets symbolOffsets;
 
     // Copy options over from another GlobalState. Private, as it's only meant to be used as a helper to implement other
     // copying strategies.
