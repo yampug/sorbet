@@ -4593,7 +4593,10 @@ ClassDef{
               flags = {}
               recv = UnresolvedConstantLit{
                 cnst = <C <U Kernel>>
-                scope = EmptyTree
+                scope = ConstantLit{
+                  symbol = (class ::<root>)
+                  orig = nullptr
+                }
               }
               fun = <U lambda>
               block = Block {

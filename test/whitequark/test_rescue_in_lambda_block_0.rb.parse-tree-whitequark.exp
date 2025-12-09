@@ -1,5 +1,6 @@
 s(:block,
   s(:send,
-    s(:const, nil, :Kernel), :lambda), nil,
+    s(:const,
+      s(:cbase), :Kernel), :lambda), nil,
   s(:rescue, nil,
     s(:resbody, nil, nil, nil), nil))

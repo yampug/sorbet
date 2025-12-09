@@ -4,6 +4,7 @@ s(:send, nil, :f,
       s(:sym, :x),
       s(:block,
         s(:send,
-          s(:const, nil, :Kernel), :lambda), nil,
+          s(:const,
+            s(:cbase), :Kernel), :lambda), nil,
         s(:block,
           s(:send, nil, :meth), nil, nil)))))

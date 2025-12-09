@@ -655,7 +655,8 @@ Begin {
         body = Block {
           send = Send {
             receiver = Const {
-              scope = NULL
+              scope = Cbase {
+              }
               name = <C <U Kernel>>
             }
             method = <U lambda>

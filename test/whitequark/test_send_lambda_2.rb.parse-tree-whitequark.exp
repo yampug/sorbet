@@ -1,3 +1,4 @@
 s(:block,
   s(:send,
-    s(:const, nil, :Kernel), :lambda), nil, nil)
+    s(:const,
+      s(:cbase), :Kernel), :lambda), nil, nil)

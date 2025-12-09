@@ -2,6 +2,7 @@ s(:assign,
   s(:lvasgn, :m),
   s(:block,
     s(:send,
-      s(:const, nil, :Kernel), :lambda),
+      s(:const,
+        s(:cbase), :Kernel), :lambda),
     s(:params,
       s(:restparam, :args)), nil))

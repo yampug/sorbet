@@ -1,7 +1,8 @@
 s(:begin,
   s(:block,
     s(:send,
-      s(:const, nil, :Kernel), :lambda),
+      s(:const,
+        s(:cbase), :Kernel), :lambda),
     s(:params,
       s(:param, :scope)), nil),
   s(:send, nil, :scope))

@@ -3,7 +3,8 @@ Begin {
     Block {
       send = Send {
         receiver = Const {
-          scope = NULL
+          scope = Cbase {
+          }
           name = <C <U Kernel>>
         }
         method = <U lambda>
@@ -18,7 +19,8 @@ Begin {
     Block {
       send = Send {
         receiver = Const {
-          scope = NULL
+          scope = Cbase {
+          }
           name = <C <U Kernel>>
         }
         method = <U lambda>
@@ -39,7 +41,8 @@ Begin {
     Block {
       send = Send {
         receiver = Const {
-          scope = NULL
+          scope = Cbase {
+          }
           name = <C <U Kernel>>
         }
         method = <U lambda>
@@ -64,7 +67,8 @@ Begin {
       receiver = Block {
         send = Send {
           receiver = Const {
-            scope = NULL
+            scope = Cbase {
+            }
             name = <C <U Kernel>>
           }
           method = <U lambda>
@@ -120,7 +124,8 @@ Begin {
         Block {
           send = Send {
             receiver = Const {
-              scope = NULL
+              scope = Cbase {
+              }
               name = <C <U Kernel>>
             }
             method = <U lambda>
@@ -137,7 +142,8 @@ Begin {
     Block {
       send = Send {
         receiver = Const {
-          scope = NULL
+          scope = Cbase {
+          }
           name = <C <U Kernel>>
         }
         method = <U lambda>
@@ -178,7 +184,8 @@ Begin {
         body = Block {
           send = Send {
             receiver = Const {
-              scope = NULL
+              scope = Cbase {
+              }
               name = <C <U Kernel>>
             }
             method = <U lambda>
@@ -195,7 +202,8 @@ Begin {
     Block {
       send = Send {
         receiver = Const {
-          scope = NULL
+          scope = Cbase {
+          }
           name = <C <U Kernel>>
         }
         method = <U lambda>
