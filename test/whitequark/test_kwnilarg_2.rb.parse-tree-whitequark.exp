@@ -1,6 +1,5 @@
 s(:block,
   s(:send,
-    s(:const,
-      s(:cbase), :Kernel), :lambda),
+    s(:resolved_const, "Kernel"), :lambda),
   s(:params,
     s(:kwnilarg)), nil)

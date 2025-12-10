@@ -241,12 +241,9 @@ ClassDef{
 
     Send{
       flags = {}
-      recv = UnresolvedConstantLit{
-        cnst = <C <U Kernel>>
-        scope = ConstantLit{
-          symbol = (class ::<root>)
-          orig = nullptr
-        }
+      recv = ConstantLit{
+        symbol = (module ::Kernel)
+        orig = nullptr
       }
       fun = <U lambda>
       block = Block {
@@ -268,12 +265,9 @@ ClassDef{
 
     Send{
       flags = {}
-      recv = UnresolvedConstantLit{
-        cnst = <C <U Kernel>>
-        scope = ConstantLit{
-          symbol = (class ::<root>)
-          orig = nullptr
-        }
+      recv = ConstantLit{
+        symbol = (module ::Kernel)
+        orig = nullptr
       }
       fun = <U lambda>
       block = Block {
@@ -327,12 +321,9 @@ ClassDef{
 
     Send{
       flags = {}
-      recv = UnresolvedConstantLit{
-        cnst = <C <U Kernel>>
-        scope = ConstantLit{
-          symbol = (class ::<root>)
-          orig = nullptr
-        }
+      recv = ConstantLit{
+        symbol = (module ::Kernel)
+        orig = nullptr
       }
       fun = <U lambda>
       block = Block {

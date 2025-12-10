@@ -1,8 +1,7 @@
 s(:begin,
   s(:block,
     s(:send,
-      s(:const,
-        s(:cbase), :Kernel), :lambda),
+      s(:resolved_const, "Kernel"), :lambda),
     s(:params,
       s(:param, :scope)), nil),
   s(:send, nil, :scope))

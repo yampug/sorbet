@@ -1,4 +1,3 @@
 s(:block,
   s(:send,
-    s(:const,
-      s(:cbase), :Kernel), :lambda), nil, nil)
+    s(:resolved_const, "Kernel"), :lambda), nil, nil)

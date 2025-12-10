@@ -1,9 +1,8 @@
 s(:case_match,
-  s(:lvar, :foo),
+  s(:send, nil, :foo),
   s(:in_pattern,
     s(:block,
       s(:send,
-        s(:const,
-          s(:cbase), :Kernel), :lambda), nil,
+        s(:resolved_const, "Kernel"), :lambda), nil,
       s(:int, "42")), nil,
     s(:true)), nil)
