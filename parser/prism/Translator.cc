@@ -2895,12 +2895,9 @@ unique_ptr<parser::Node> Translator::translate(pm_node_t *node) {
         case PM_LAMBDA_NODE: { // lambda literals, like `-> { 123 }`
             auto lambdaNode = down_cast<pm_lambda_node>(node);
 
-            auto rootScope = MK::Constant(location, core::Symbols::root());
-
-            auto receiverExpr = MK::UnresolvedConstant(location, MK::Constant(location, core::Symbols::root()),
-                                                       core::Names::Constants::Kernel());
-            auto receiver = make_node_with_expr<parser::Const>(
-                move(receiverExpr), location, make_unique<parser::Cbase>(location), core::Names::Constants::Kernel());
+            auto receiverExpr = MK::Constant(location, core::Symbols::Kernel());
+            auto receiver =
+                make_node_with_expr<parser::ResolvedConst>(move(receiverExpr), location, core::Symbols::Kernel());
             auto sendNode = make_unique<parser::Send>(location, move(receiver), core::Names::lambda(),
                                                       translateLoc(lambdaNode->operator_loc), NodeVec{});
 
