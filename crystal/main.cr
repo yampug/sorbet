@@ -3,8 +3,19 @@ require "json"
 @[Link("sorbet")]
 lib LibSorbet
   type Session = Void*
+
+  # Standard API
   fun new = sorbet_new(args : LibC::Char*) : Session
   fun send = sorbet_send(session : Session, msg : LibC::Char*) : LibC::Char*
+
+  # PERFORMANCE: Multi-threaded API
+  fun new_mt = sorbet_new_mt(args : LibC::Char*, num_threads : Int32) : Session
+
+  # PERFORMANCE: Batch API
+  fun send_batch = sorbet_send_batch(session : Session, msgs : LibC::Char**, count : Int32) : LibC::Char*
+
+  # Memory management
+  fun free_string = sorbet_free_string(str : LibC::Char*)
   fun free = sorbet_free(session : Session)
 end
 
@@ -31,9 +42,10 @@ class SorbetClient
         capabilities: {} of String => String
       }
     }.to_json
-    
+
     response_ptr = LibSorbet.send(@session, init_msg)
-    # verify response... (omitted for brevity)
+    # Free the response string after use
+    LibSorbet.free_string(response_ptr) unless response_ptr.null?
 
     # 2. initialized notification
     initialized_msg = {
@@ -41,7 +53,10 @@ class SorbetClient
       method: "initialized",
       params: {} of String => String
     }.to_json
-    LibSorbet.send(@session, initialized_msg)
+
+    response_ptr = LibSorbet.send(@session, initialized_msg)
+    # Free the response string after use
+    LibSorbet.free_string(response_ptr) unless response_ptr.null?
   end
 
   def typecheck(file_path : String, content : String)
@@ -66,13 +81,8 @@ class SorbetClient
     end
 
     response_str = String.new(response_ptr)
-    # Important: In a real app we'd need to free the pointer if we expose a free function for strings,
-    # or rely on the fact that for this test we leak small amounts.
-    # The current C API `sorbet_send` uses `malloc`, so we technically leak here unless we `free` it directly 
-    # or expose `sorbet_free_string`. For this POC it's acceptable.
-
     puts "Sorbet Response (didOpen): #{response_str}"
-    
+
     # Check for publishDiagnostics notification
     begin
         json = JSON.parse(response_str)
@@ -83,6 +93,9 @@ class SorbetClient
         end
     rescue ex
         puts "Error parsing JSON: #{ex.message}"
+    ensure
+        # Free the C string to prevent memory leak
+        LibSorbet.free_string(response_ptr)
     end
   end
 
