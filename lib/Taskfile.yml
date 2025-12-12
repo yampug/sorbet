@@ -1,0 +1,98 @@
+version: '3'
+
+vars:
+  BUILD_TARGET: '//lib:libsorbet'
+  DOCKER_IMAGE: 'sorbet-builder'
+
+tasks:
+  docker:build:
+    desc: Build Docker image for Linux builds
+    cmds:
+      - docker build -t {{.DOCKER_IMAGE}} .
+    sources:
+      - Dockerfile
+
+  build:macos:
+    desc: Build libsorbet for macOS (.dylib) - Fixed for macOS Sequoia 15+
+    cmds:
+      - bazel build {{.BUILD_TARGET}}.dylib
+      - mkdir -p ../dist/macos
+      - |
+        # Find the actual built library (bazel-bin symlink may not exist)
+        DYLIB=$(find /private/var/tmp/_bazel_* -path "*/darwin_arm64-fastbuild/bin/lib/libsorbet.dylib" 2>/dev/null | head -1)
+        if [ -n "$DYLIB" ]; then
+          cp -f "$DYLIB" ../dist/macos/
+          echo "✅ Built: ../dist/macos/libsorbet.dylib"
+        else
+          echo "❌ Error: Could not find libsorbet.dylib"
+          exit 1
+        fi
+    sources:
+      - sorbet_c_api.cc
+      - BUILD
+    generates:
+      - ../dist/macos/libsorbet.dylib
+
+  build:macos:docker:
+    desc: Build libsorbet using Docker (workaround for macOS Sequoia)
+    deps: [docker:build]
+    cmds:
+      - echo "macOS builds via Docker not fully supported - use native Linux Docker build instead"
+
+  build:linux:
+    desc: Build libsorbet for Linux (.so) using Docker
+    deps: [docker:build]
+    cmds:
+      - mkdir -p ../dist/linux
+      - |
+        docker run --rm \
+          -v {{.ROOT_DIR}}/..:/workspace \
+          -w /workspace \
+          {{.DOCKER_IMAGE}} \
+          bash -c "bazel build {{.BUILD_TARGET}}.so && cp -f bazel-bin/lib/libsorbet.so dist/linux/"
+    sources:
+      - sorbet_c_api.cc
+      - BUILD
+      - Dockerfile
+    generates:
+      - ../dist/linux/libsorbet.so
+
+  build:windows:
+    desc: Build libsorbet for Windows (.dll) - Requires Windows or MinGW toolchain
+    cmds:
+      - echo "Windows builds require native Windows or MinGW cross-compilation toolchain"
+      - echo "Consider using GitHub Actions or a Windows VM for Windows builds"
+      - exit 1
+
+  build:all:
+    desc: Build libsorbet for all supported platforms
+    cmds:
+      - task: build:macos
+      - task: build:linux
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - bazel clean
+      - rm -rf ../dist/macos ../dist/linux ../dist/windows
+
+  install:macos:
+    desc: Install libsorbet to system (macOS)
+    deps: [build:macos]
+    cmds:
+      - sudo cp ../dist/macos/libsorbet.dylib /usr/local/lib/
+      - sudo install_name_tool -id /usr/local/lib/libsorbet.dylib /usr/local/lib/libsorbet.dylib
+
+  install:linux:
+    desc: Install libsorbet to system (Linux)
+    deps: [build:linux]
+    cmds:
+      - sudo cp ../dist/linux/libsorbet.so /usr/local/lib/
+      - sudo ldconfig
+
+  test:
+    desc: Test the library with the Crystal example
+    deps: [build:macos]
+    cmds:
+      - cd ../crystal && crystal build main.cr -L../dist/macos
+      - cd ../crystal && ./main

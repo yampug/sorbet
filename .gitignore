@@ -52,3 +52,11 @@ doc/
 test/sandbox/*/*.log
 test/sandbox/*/*.rb
 test/sandbox/*/*.rbi
+
+crystal/main
+crystal/main.dwarf
+crystal/*.txt
+dist/macos/libsorbet.dylib
+
+lib/.task
+
