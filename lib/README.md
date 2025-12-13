@@ -43,26 +43,55 @@ task docker:build
 task clean
 ```
 
-## Known Issues
-
-### macOS Sequoia 15+ Build Failure (Fixed)
-
-**Error:** `dyld: __DATA_CONST segment missing SG_READ_ONLY flag`
-
-**Cause:** macOS Sequoia (15.x / 26.x) introduced stricter dyld security checks that are incompatible with LLVM 15.x linker output.
-
-**Solution:** Upgraded LLVM from 15.0.7 to 16.0.0+
-
-The fix has been applied to this repository:
-- `WORKSPACE`: Updated `llvm_toolchain_15_0_7` → `llvm_toolchain_16_0_0`
-- `tools/clang.bzl`: Updated toolchain reference
-- `test/pipeline_test.bzl`: Updated ASAN symbolizer path
-
-
-
 ## Usage Example
 
 See `../crystal/main.cr` for a complete example using the wrapper from Crystal.
+
+## Running Tests
+
+The Crystal directory contains a comprehensive test suite:
+
+```bash
+cd crystal
+
+# Install dependencies
+task --list  # Show available tasks
+
+# Run all specs
+task spec
+
+# Run specific spec groups
+task spec-basic      # Basic functionality tests
+task spec-require    # Require resolution tests
+
+# Clean up
+task clean
+```
+
+The test suite covers:
+- Basic session management
+- File typechecking
+- Error detection and reporting
+- Require resolution (require_relative, nested requires, etc.)
+- Batch processing and multi-threaded operations
+- Memory management and cleanup
+
+### Testing the Build
+
+After building libsorbet, you can test it with the Crystal examples:
+
+```bash
+# Build libsorbet first
+cd ../lib
+task build:macos      # macOS
+task build:linux      # Linux
+
+# Test with Crystal
+cd ../crystal
+crystal build main.cr -L../dist/macos   # macOS
+crystal build main.cr -L../dist/linux   # Linux
+```
+=======
 
 ## API
 

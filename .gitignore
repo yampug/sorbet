@@ -60,3 +60,4 @@ dist/macos/libsorbet.dylib
 
 lib/.task
 
+/crystal/libsorbet.dylib

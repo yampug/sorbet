@@ -1,0 +1,34 @@
+version: '3'
+
+tasks:
+  spec:
+    desc: Run all specs with libsorbet
+    cmds:
+      - ./run_specs.sh spec
+
+  spec-basic:
+    desc: Run basic specs with libsorbet
+    cmds:
+      - ./run_specs.sh spec/basic_spec.cr
+
+  spec-require:
+    desc: Run require resolution specs with libsorbet
+    cmds:
+      - ./run_specs.sh spec/require_resolution_spec.cr
+
+  build:
+    desc: Build the main example
+    cmds:
+      - crystal build main.cr --link-flags="-L."
+
+  build:production:
+    desc: Build production CLI (no warnings)
+    cmds:
+      - ./build_production.sh
+
+  clean:
+    desc: Clean up test files
+    cmds:
+      - rm -f test_*.rb require_*.rb helper_*.rb main_*.rb circular_*.rb std_lib_*.rb missing_*.rb nested_*.rb file*.rb
+      - rm -f spec/test_*.rb
+      - rm -rf build dist
