@@ -105,6 +105,13 @@ static std::vector<std::string> parseArgsJson(const char *args_json) {
 SorbetState *sorbet_new(const char *args_json) {
     std::vector<std::string> args = parseArgsJson(args_json);
 
+    // Extract root directory from args (last argument) and remove it so it's not double-counted
+    std::string root_dir = ".";
+    if (!args.empty()) {
+        root_dir = args.back();
+        args.pop_back();
+    }
+
     std::vector<char *> argv_ptrs;
     for (auto &arg : args) {
         argv_ptrs.push_back(&arg[0]);
@@ -140,6 +147,13 @@ SorbetState *sorbet_new(const char *args_json) {
 SorbetState *sorbet_new_mt(const char *args_json, int num_threads) {
     std::vector<std::string> args = parseArgsJson(args_json);
 
+    // Extract root directory from args (last argument) and remove it so it's not double-counted
+    std::string root_dir = ".";
+    if (!args.empty()) {
+        root_dir = args.back();
+        args.pop_back();
+    }
+
     std::vector<char *> argv_ptrs;
     for (auto &arg : args) {
         argv_ptrs.push_back(&arg[0]);
@@ -163,7 +177,10 @@ SorbetState *sorbet_new_mt(const char *args_json, int num_threads) {
 
     // Use specified number of threads, default to 2
     int threads = num_threads > 0 ? num_threads : 2;
-    auto wrapper = sorbet::realmain::lsp::MultiThreadedLSPWrapper::create(".", opts, threads);
+
+// Root dir extracted earlier
+
+    auto wrapper = sorbet::realmain::lsp::MultiThreadedLSPWrapper::create(root_dir, opts, threads);
     wrapper->enableAllExperimentalFeatures();
 
     SorbetState *state = new SorbetState();
