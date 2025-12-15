@@ -105,7 +105,7 @@ class PropagateVisibility final {
                    // duplicate export errors.
                    (!sym.isClassOrModule() || !sym.asClassOrModuleRef().data(ctx)->isSingletonClass(ctx))) {
             this->explicitlyExported[sym] =
-                ExportBlame{.exportedBy = currentExportLineSym, .firstExportedAt = currentExportLineLoc};
+                ExportBlame{currentExportLineSym, currentExportLineLoc};
         }
     }
 

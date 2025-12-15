@@ -2,6 +2,8 @@ load("//tools:clang.bzl", "clang_tool")
 load("@com_grail_bazel_compdb//:defs.bzl", "compilation_database")
 load("@com_grail_bazel_output_base_util//:defs.bzl", "OUTPUT_BASE")
 
+exports_files(["dummy.sh"])
+
 clang_tool("clang-format")
 
 clang_tool("clang-tidy")

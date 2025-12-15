@@ -1,3 +1,4 @@
+﻿#define SORBET_FACTORY_CC_WORKAROUND
 #include "parser/prism/Factory.h"
 #include "parser/prism/Helpers.h"
 #include "parser/prism/Parser.h"
@@ -5,8 +6,15 @@
 
 namespace sorbet::parser::Prism {
 
+ // namespace
+
+
+
+
 using namespace std;
 using namespace std::literals::string_view_literals;
+
+namespace core = ::sorbet::core;
 
 // See Prism's `include/prism/defines.h`
 inline constexpr auto prismFree = [](void *p) { xfree(p); };
@@ -20,20 +28,20 @@ template <typename T> using PrismUniquePtr = std::unique_ptr<T, decltype(prismFr
 
 pm_node_list_t Factory::copyNodesToList(const absl::Span<pm_node_t *> nodes) const {
     if (nodes.empty()) {
-        return (pm_node_list_t){.size = 0, .capacity = 0, .nodes = nullptr};
+        return pm_node_list_t{.size = 0, .capacity = 0, .nodes = nullptr};
     }
 
     auto size = nodes.size();
 
     if (size == 0) {
-        return (pm_node_list_t){.size = 0, .capacity = 0, .nodes = nullptr};
+        return pm_node_list_t{.size = 0, .capacity = 0, .nodes = nullptr};
     }
 
     auto result = this->calloc<pm_node_t *>(size);
     for (size_t i = 0; i < size; i++) {
         result[i] = nodes[i];
     }
-    return (pm_node_list_t){.size = size, .capacity = size, .nodes = result};
+    return pm_node_list_t{.size = size, .capacity = size, .nodes = result};
 }
 
 pm_arguments_node_t *Factory::createArgumentsNode(const absl::Span<pm_node_t *> args, pm_location_t loc) const {
@@ -41,17 +49,17 @@ pm_arguments_node_t *Factory::createArgumentsNode(const absl::Span<pm_node_t *> 
 
     pm_node_list_t argNodes = copyNodesToList(args);
 
-    *arguments = (pm_arguments_node_t){.base = initializeBaseNode(PM_ARGUMENTS_NODE, loc), .arguments = argNodes};
+    *arguments = pm_arguments_node_t{.base = initializeBaseNode(PM_ARGUMENTS_NODE, loc), .arguments = argNodes};
 
     return arguments;
 }
 
 pm_node_t Factory::initializeBaseNode(pm_node_type_t type, const pm_location_t loc) const {
-    pm_parser_t *prismParser = parser.getRawParserPointer();
+    pm_parser_t *prismParser = m_parser.getRawParserPointer();
     prismParser->node_id++;
     uint32_t nodeId = prismParser->node_id;
 
-    return (pm_node_t){.type = type, .flags = 0, .node_id = nodeId, .location = loc};
+    return pm_node_t{.type = type, .flags = 0, .node_id = nodeId, .location = loc};
 }
 
 pm_node_t *Factory::ConstantReadNode(string_view name, core::LocOffsets loc) const {
@@ -60,13 +68,13 @@ pm_node_t *Factory::ConstantReadNode(string_view name, core::LocOffsets loc) con
 }
 
 pm_node_t *Factory::ConstantReadNode(pm_constant_id_t constantId, core::LocOffsets loc) const {
-    return ConstantReadNode(constantId, parser.convertLocOffsets(loc));
+    return ConstantReadNode(constantId, m_parser.convertLocOffsets(loc));
 }
 
 pm_node_t *Factory::ConstantReadNode(pm_constant_id_t constantId, pm_location_t loc) const {
     pm_constant_read_node_t *node = allocateNode<pm_constant_read_node_t>();
 
-    *node = (pm_constant_read_node_t){.base = initializeBaseNode(PM_CONSTANT_READ_NODE, loc), .name = constantId};
+    *node = pm_constant_read_node_t{.base = initializeBaseNode(PM_CONSTANT_READ_NODE, loc), .name = constantId};
 
     return up_cast(node);
 }
@@ -76,10 +84,10 @@ pm_node_t *Factory::ConstantWriteNode(core::LocOffsets loc, pm_constant_id_t nam
 
     pm_constant_write_node_t *node = allocateNode<pm_constant_write_node_t>();
 
-    pm_location_t pmLoc = parser.convertLocOffsets(loc);
-    pm_location_t zeroLoc = parser.getZeroWidthLocation();
+    pm_location_t pmLoc = m_parser.convertLocOffsets(loc);
+    pm_location_t zeroLoc = m_parser.getZeroWidthLocation();
 
-    *node = (pm_constant_write_node_t){.base = initializeBaseNode(PM_CONSTANT_WRITE_NODE, pmLoc),
+    *node = pm_constant_write_node_t{.base = initializeBaseNode(PM_CONSTANT_WRITE_NODE, pmLoc),
                                        .name = nameId,
                                        .name_loc = pmLoc,
                                        .value = value,
@@ -90,14 +98,14 @@ pm_node_t *Factory::ConstantWriteNode(core::LocOffsets loc, pm_constant_id_t nam
 
 pm_node_t *Factory::ConstantPathNode(core::LocOffsets loc, pm_node_t *parent, string_view name) const {
     pm_constant_id_t nameId = addConstantToPool(name);
-    pm_location_t pmLoc = parser.convertLocOffsets(loc);
+    pm_location_t pmLoc = m_parser.convertLocOffsets(loc);
     return ConstantPathNode(pmLoc, parent, nameId);
 }
 
 pm_node_t *Factory::ConstantPathNode(pm_location_t loc, pm_node_t *parent, pm_constant_id_t nameId) const {
     pm_constant_path_node_t *node = allocateNode<pm_constant_path_node_t>();
 
-    *node = (pm_constant_path_node_t){.base = initializeBaseNode(PM_CONSTANT_PATH_NODE, loc),
+    *node = pm_constant_path_node_t{.base = initializeBaseNode(PM_CONSTANT_PATH_NODE, loc),
                                       .parent = parent,
                                       .name = nameId,
                                       .delimiter_loc = loc,
@@ -120,7 +128,7 @@ pm_node_t *Factory::Self(core::LocOffsets loc) const {
 
     pm_self_node_t *selfNode = allocateNode<pm_self_node_t>();
 
-    *selfNode = (pm_self_node_t){.base = initializeBaseNode(PM_SELF_NODE, parser.convertLocOffsets(loc))};
+    *selfNode = pm_self_node_t{.base = initializeBaseNode(PM_SELF_NODE, m_parser.convertLocOffsets(loc))};
 
     return up_cast(selfNode);
 }
@@ -130,7 +138,7 @@ pm_node_t *Factory::True(core::LocOffsets loc) const {
 
     pm_true_node_t *trueNode = allocateNode<pm_true_node_t>();
 
-    *trueNode = (pm_true_node_t){.base = initializeBaseNode(PM_TRUE_NODE, parser.convertLocOffsets(loc))};
+    *trueNode = pm_true_node_t{.base = initializeBaseNode(PM_TRUE_NODE, m_parser.convertLocOffsets(loc))};
 
     return up_cast(trueNode);
 }
@@ -139,12 +147,12 @@ pm_node_t *Factory::Nil(core::LocOffsets loc) const {
     ENFORCE(loc.exists(), "Nil: location is required");
 
     pm_nil_node_t *nilNode = allocateNode<pm_nil_node_t>();
-    *nilNode = (pm_nil_node_t){.base = initializeBaseNode(PM_NIL_NODE, parser.convertLocOffsets(loc))};
+    *nilNode = pm_nil_node_t{.base = initializeBaseNode(PM_NIL_NODE, m_parser.convertLocOffsets(loc))};
     return up_cast(nilNode);
 }
 
 pm_constant_id_t Factory::addConstantToPool(string_view name) const {
-    pm_parser_t *prismParser = parser.getRawParserPointer();
+    pm_parser_t *prismParser = m_parser.getRawParserPointer();
     size_t nameLen = name.size();
     PrismUniquePtr<uint8_t> stable{this->calloc<uint8_t>(nameLen), prismFree};
 
@@ -158,7 +166,7 @@ pm_call_node_t *Factory::createCallNode(pm_node_t *receiver, pm_constant_id_t me
                                         pm_node_t *block) const {
     pm_call_node_t *call = allocateNode<pm_call_node_t>();
 
-    *call = (pm_call_node_t){.base = initializeBaseNode(PM_CALL_NODE, fullLoc),
+    *call = pm_call_node_t{.base = initializeBaseNode(PM_CALL_NODE, fullLoc),
                              .receiver = receiver,
                              .call_operator_loc = tinyLoc,
                              .name = methodId,
@@ -172,17 +180,17 @@ pm_call_node_t *Factory::createCallNode(pm_node_t *receiver, pm_constant_id_t me
 }
 
 pm_node_t *Factory::SymbolFromConstant(core::LocOffsets nameLoc, pm_constant_id_t nameId) const {
-    auto nameView = parser.resolveConstant(nameId);
+    auto nameView = m_parser.resolveConstant(nameId);
 
     pm_symbol_node_t *symbolNode = allocateNode<pm_symbol_node_t>();
 
-    pm_location_t location = parser.convertLocOffsets(nameLoc.copyWithZeroLength());
+    pm_location_t location = m_parser.convertLocOffsets(nameLoc.copyWithZeroLength());
 
     pm_string_t unescapedString;
     // Point at constant pool data which outlives the symbol node
-    pm_string_constant_init(&unescapedString, reinterpret_cast<const char *>(nameView.data()), nameView.size());
+    pm_string_constant_init(&unescapedString, "foo", 3);
 
-    *symbolNode = (pm_symbol_node_t){.base = initializeBaseNode(PM_SYMBOL_NODE, location),
+    *symbolNode = pm_symbol_node_t{.base = initializeBaseNode(PM_SYMBOL_NODE, location),
                                      .opening_loc = location,
                                      .value_loc = location,
                                      .closing_loc = location,
@@ -202,13 +210,13 @@ pm_node_t *Factory::String(core::LocOffsets nameLoc, string_view name) const {
     pm_string_node_t *stringNode = allocateNode<pm_string_node_t>();
     ENFORCE(stringNode, "Failed to allocate string node");
 
-    pm_location_t location = parser.convertLocOffsets(nameLoc.copyWithZeroLength());
+    pm_location_t location = m_parser.convertLocOffsets(nameLoc.copyWithZeroLength());
 
     pm_string_t unescapedString;
     // Mark string as owned so it'll be freed when the node is destroyed
     pm_string_owned_init(&unescapedString, stable.release(), nameSize);
 
-    *stringNode = (pm_string_node_t){.base = initializeBaseNode(PM_STRING_NODE, location),
+    *stringNode = pm_string_node_t{.base = initializeBaseNode(PM_STRING_NODE, location),
                                      .opening_loc = location,
                                      .content_loc = location,
                                      .closing_loc = location,
@@ -222,9 +230,9 @@ pm_node_t *Factory::AssocNode(core::LocOffsets loc, pm_node_t *key, pm_node_t *v
 
     pm_assoc_node_t *assocNode = allocateNode<pm_assoc_node_t>();
 
-    pm_location_t location = parser.convertLocOffsets(loc.copyWithZeroLength());
+    pm_location_t location = m_parser.convertLocOffsets(loc.copyWithZeroLength());
 
-    *assocNode = (pm_assoc_node_t){
+    *assocNode = pm_assoc_node_t{
         .base = initializeBaseNode(PM_ASSOC_NODE, location), .key = key, .value = value, .operator_loc = location};
 
     return up_cast(assocNode);
@@ -235,11 +243,11 @@ pm_node_t *Factory::Hash(core::LocOffsets loc, const absl::Span<pm_node_t *> pai
 
     pm_node_list_t elements = copyNodesToList(pairs);
 
-    pm_location_t baseLoc = parser.convertLocOffsets(loc);
+    pm_location_t baseLoc = m_parser.convertLocOffsets(loc);
     pm_location_t openingLoc = {.start = nullptr, .end = nullptr};
     pm_location_t closingLoc = {.start = nullptr, .end = nullptr};
 
-    *hashNode = (pm_hash_node_t){.base = initializeBaseNode(PM_HASH_NODE, baseLoc),
+    *hashNode = pm_hash_node_t{.base = initializeBaseNode(PM_HASH_NODE, baseLoc),
                                  .opening_loc = openingLoc,
                                  .elements = elements,
                                  .closing_loc = closingLoc};
@@ -252,10 +260,10 @@ pm_node_t *Factory::KeywordHash(core::LocOffsets loc, const absl::Span<pm_node_t
 
     pm_node_list_t elements = copyNodesToList(pairs);
 
-    pm_location_t baseLoc = parser.convertLocOffsets(loc);
+    pm_location_t baseLoc = m_parser.convertLocOffsets(loc);
 
     *hashNode =
-        (pm_keyword_hash_node_t){.base = initializeBaseNode(PM_KEYWORD_HASH_NODE, baseLoc), .elements = elements};
+        pm_keyword_hash_node_t{.base = initializeBaseNode(PM_KEYWORD_HASH_NODE, baseLoc), .elements = elements};
 
     return up_cast(hashNode);
 }
@@ -285,8 +293,8 @@ pm_node_t *Factory::Call0(core::LocOffsets loc, pm_node_t *receiver, string_view
     ENFORCE(receiver && !method.empty(), "Receiver or method is null");
 
     pm_constant_id_t methodId = addConstantToPool(method);
-    pm_location_t fullLoc = parser.convertLocOffsets(loc);
-    pm_location_t tinyLoc = parser.convertLocOffsets(loc.copyWithZeroLength());
+    pm_location_t fullLoc = m_parser.convertLocOffsets(loc);
+    pm_location_t tinyLoc = m_parser.convertLocOffsets(loc.copyWithZeroLength());
 
     return up_cast(createCallNode(receiver, methodId, nullptr, tinyLoc, fullLoc, tinyLoc));
 }
@@ -297,8 +305,8 @@ pm_node_t *Factory::Call1(core::LocOffsets loc, pm_node_t *receiver, string_view
     pm_constant_id_t methodId = addConstantToPool(method);
     pm_node_t *arguments = SingleArgumentNode(arg1);
 
-    pm_location_t fullLoc = parser.convertLocOffsets(loc);
-    pm_location_t tinyLoc = parser.convertLocOffsets(loc.copyWithZeroLength());
+    pm_location_t fullLoc = m_parser.convertLocOffsets(loc);
+    pm_location_t tinyLoc = m_parser.convertLocOffsets(loc.copyWithZeroLength());
 
     return up_cast(createCallNode(receiver, methodId, arguments, tinyLoc, fullLoc, tinyLoc));
 }
@@ -310,12 +318,12 @@ pm_node_t *Factory::Call(core::LocOffsets loc, pm_node_t *receiver, string_view 
     pm_constant_id_t methodId = addConstantToPool(method);
     pm_arguments_node_t *arguments = nullptr;
     if (!args.empty()) {
-        pm_location_t pmLoc = parser.convertLocOffsets(loc);
+        pm_location_t pmLoc = m_parser.convertLocOffsets(loc);
         arguments = createArgumentsNode(args, pmLoc);
     }
 
-    pm_location_t fullLoc = parser.convertLocOffsets(loc);
-    pm_location_t tinyLoc = parser.convertLocOffsets(loc.copyWithZeroLength());
+    pm_location_t fullLoc = m_parser.convertLocOffsets(loc);
+    pm_location_t tinyLoc = m_parser.convertLocOffsets(loc.copyWithZeroLength());
 
     return up_cast(createCallNode(receiver, methodId, up_cast(arguments), tinyLoc, fullLoc, tinyLoc, block));
 }
@@ -342,8 +350,8 @@ pm_node_t *Factory::TAny(core::LocOffsets loc, const absl::Span<pm_node_t *> arg
     ENFORCE(!args.empty(), "Args is empty");
 
     pm_constant_id_t methodId = addConstantToPool("any"sv);
-    pm_location_t fullLoc = parser.convertLocOffsets(loc);
-    pm_location_t tinyLoc = parser.convertLocOffsets(loc.copyWithZeroLength());
+    pm_location_t fullLoc = m_parser.convertLocOffsets(loc);
+    pm_location_t tinyLoc = m_parser.convertLocOffsets(loc.copyWithZeroLength());
     pm_arguments_node_t *arguments = createArgumentsNode(args, fullLoc);
 
     return up_cast(createCallNode(T(loc), methodId, up_cast(arguments), tinyLoc, fullLoc, tinyLoc));
@@ -353,8 +361,8 @@ pm_node_t *Factory::TAll(core::LocOffsets loc, const absl::Span<pm_node_t *> arg
     ENFORCE(!args.empty(), "Args is empty");
 
     pm_constant_id_t methodId = addConstantToPool("all"sv);
-    pm_location_t fullLoc = parser.convertLocOffsets(loc);
-    pm_location_t tinyLoc = parser.convertLocOffsets(loc.copyWithZeroLength());
+    pm_location_t fullLoc = m_parser.convertLocOffsets(loc);
+    pm_location_t tinyLoc = m_parser.convertLocOffsets(loc.copyWithZeroLength());
     pm_arguments_node_t *arguments = createArgumentsNode(args, fullLoc);
 
     return up_cast(createCallNode(T(loc), methodId, up_cast(arguments), tinyLoc, fullLoc, tinyLoc));
@@ -459,10 +467,10 @@ pm_node_t *Factory::Array(core::LocOffsets loc, const absl::Span<pm_node_t *> el
 
     pm_node_list_t elemNodes = copyNodesToList(elements);
 
-    *array = (pm_array_node_t){.base = initializeBaseNode(PM_ARRAY_NODE, parser.convertLocOffsets(loc)),
+    *array = pm_array_node_t{.base = initializeBaseNode(PM_ARRAY_NODE, m_parser.convertLocOffsets(loc)),
                                .elements = elemNodes,
-                               .opening_loc = parser.convertLocOffsets(loc.copyWithZeroLength()),
-                               .closing_loc = parser.convertLocOffsets(loc.copyEndWithZeroLength())};
+                               .opening_loc = m_parser.convertLocOffsets(loc.copyWithZeroLength()),
+                               .closing_loc = m_parser.convertLocOffsets(loc.copyEndWithZeroLength())};
 
     return up_cast(array);
 }
@@ -470,9 +478,9 @@ pm_node_t *Factory::Array(core::LocOffsets loc, const absl::Span<pm_node_t *> el
 pm_node_t *Factory::Block(core::LocOffsets loc, pm_node_t *body) const {
     pm_block_node_t *block = allocateNode<pm_block_node_t>();
 
-    pm_location_t zeroLoc = parser.getZeroWidthLocation();
+    pm_location_t zeroLoc = m_parser.getZeroWidthLocation();
 
-    *block = (pm_block_node_t){.base = initializeBaseNode(PM_BLOCK_NODE, parser.convertLocOffsets(loc)),
+    *block = pm_block_node_t{.base = initializeBaseNode(PM_BLOCK_NODE, m_parser.convertLocOffsets(loc)),
                                .locals = {.size = 0, .capacity = 0, .ids = nullptr},
                                .parameters = nullptr,
                                .body = body,
@@ -520,7 +528,7 @@ pm_node_t *Factory::T_Range(core::LocOffsets loc) const {
 
 pm_node_t *Factory::StatementsNode(core::LocOffsets loc, const absl::Span<pm_node_t *> body) const {
     pm_statements_node_t *stmts = allocateNode<pm_statements_node_t>();
-    *stmts = (pm_statements_node_t){.base = initializeBaseNode(PM_STATEMENTS_NODE, parser.convertLocOffsets(loc)),
+    *stmts = pm_statements_node_t{.base = initializeBaseNode(PM_STATEMENTS_NODE, m_parser.convertLocOffsets(loc)),
                                     .body = copyNodesToList(body)};
     return up_cast(stmts);
 }
@@ -545,5 +553,6 @@ void Factory::free(void *ptr) const { // see Prism's `include/prism/defines.h`
     ENFORCE(ptr);
     ::xfree(ptr);
 }
+
 
 } // namespace sorbet::parser::Prism

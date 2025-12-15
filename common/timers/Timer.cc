@@ -1,5 +1,38 @@
 #include "common/timers/Timer.h"
 using namespace std;
+
+#ifdef _WIN32
+#define byte win_byte
+#include <windows.h>
+#undef byte
+#define CLOCK_MONOTONIC_COARSE 0
+#define CLOCK_MONOTONIC 1
+
+using clockid_t = int;
+
+int clock_getres(clockid_t clk_id, struct timespec *tp) {
+    LARGE_INTEGER frequency;
+    if (QueryPerformanceFrequency(&frequency)) {
+        tp->tv_sec = 0;
+        tp->tv_nsec = (long)(1000000000 / frequency.QuadPart);
+    } else {
+        tp->tv_sec = 0;
+        tp->tv_nsec = 0;
+    }
+    return 0;
+}
+
+int clock_gettime(clockid_t clk_id, struct timespec *tp) {
+    LARGE_INTEGER frequency;
+    LARGE_INTEGER now;
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&now);
+    tp->tv_sec = now.QuadPart / frequency.QuadPart;
+    tp->tv_nsec = (long)((now.QuadPart % frequency.QuadPart) * 1000000000 / frequency.QuadPart);
+    return 0;
+}
+#endif
+
 namespace sorbet {
 
 namespace {

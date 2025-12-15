@@ -8,12 +8,16 @@
 extern "C" {
 #include "prism.h"
 }
+#ifdef _WIN32
+#undef VOID
+#endif
 
 #include "core/LocOffsets.h"
 #include "parser/Node.h" // To clarify: these are Sorbet Parser nodes, not Prism ones.
 #include "parser/ParseResult.h"
 
 namespace sorbet::parser::Prism {
+namespace core = ::sorbet::core;
 
 class Factory;
 class ParseResult;
@@ -65,7 +69,7 @@ public:
     Parser(Parser &&) = delete;
     Parser &operator=(Parser &&) = delete;
 
-    static parser::ParseResult run(core::MutableContext ctx, bool directlyDesugar = true,
+    static ::sorbet::parser::ParseResult run(core::MutableContext ctx, bool directlyDesugar = true,
                                    bool preserveConcreteSyntax = false);
 
     ParseResult parseWithoutTranslation(bool collectComments = false);
@@ -136,5 +140,5 @@ public:
     }
 };
 
-} // namespace sorbet::parser::Prism
+} // namespace parser::Prism
 #endif // SORBET_PARSER_PRISM_PARSER_H

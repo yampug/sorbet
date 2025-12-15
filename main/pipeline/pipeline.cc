@@ -484,7 +484,9 @@ ast::ParsedFile indexOne(const options::Options &opts, core::GlobalState &lgs, c
                 print.RewriterTreeRaw.fmt("{}\n", tree.showRaw(lgs));
             }
 
+            fprintf(stderr, "DEBUG: indexOne calling runLocalVars\n");
             tree = runLocalVars(lgs, ast::ParsedFile{move(tree), file}).tree;
+            fprintf(stderr, "DEBUG: indexOne runLocalVars done\n");
             if (opts.stopAfterPhase == options::Phase::LOCAL_VARS) {
                 return emptyParsedFile(file);
             }

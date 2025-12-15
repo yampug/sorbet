@@ -11,7 +11,11 @@
 #include "rapidjson/writer.h"
 #include "sorbet_version/sorbet_version.h"
 #include <string>
+#ifdef _WIN32
+#include <process.h>
+#else
 #include <unistd.h>
+#endif
 
 using namespace std;
 
@@ -216,7 +220,11 @@ string Tracing::jsonlToJSON(const string &jsonl, bool needsOpeningBracket, bool 
 // https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview
 bool Tracing::storeTraces(const CounterState &counters, const string &fileName, bool strict) {
     auto now = Timer::clock_gettime_coarse();
+#ifdef _WIN32
+    auto pid = _getpid();
+#else
     auto pid = getpid();
+#endif
 
     string jsonl = stateToJSONL(counters, pid, now);
     string result = jsonlToJSON(jsonl, !FileOps::exists(fileName), strict);

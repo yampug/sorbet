@@ -42,6 +42,7 @@ public:
     void postTransformClassDef(core::MutableContext ctx, ast::ExpressionPtr &tree) {
         auto classDef = ast::cast_tree<ast::ClassDef>(tree);
 
+
         auto isClass = classDef->kind == ast::ClassDef::Kind::Class;
 
         Command::run(ctx, classDef);
@@ -203,6 +204,7 @@ ast::ExpressionPtr Rewriter::run(core::MutableContext ctx, ast::ExpressionPtr tr
     Rewriterer rewriter;
 
     ast::TreeWalk::apply(ctx, rewriter, ast);
+    // This AST flattening pass requires that we mutate the AST in a way that our previous DSL passes were not designed
     // This AST flattening pass requires that we mutate the AST in a way that our previous DSL passes were not designed
     // around, which is why it runs all at once and is not expressed as a `patch` method like the other DSL passes. This
     // is a rare case: in general, we should *not* add new DSL passes here.

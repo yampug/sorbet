@@ -6,6 +6,7 @@ cc_library(
     ] + select({
         "@platforms//os:osx": ["mac.cc"],
         "@platforms//cpu:wasm32": ["emscripten.cc"],
+        "@bazel_tools//src/conditions:host_windows": ["windows.cc"],
         "//conditions:default": ["linux.cc"],
     }),
     hdrs = [

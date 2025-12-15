@@ -29,7 +29,7 @@ cc_test(
     data = glob([
         "fixtures/*.rb",
         "fixtures/*.rb.exp",
-    ]),
+    ], allow_empty = True),
     linkstatic = select({
         "//tools/config:linkshared": 0,
         "//conditions:default": 1,

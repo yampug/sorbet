@@ -2,6 +2,7 @@ cc_library(
     name = "statsd",
     srcs = select({
         "@platforms//cpu:wasm32": ["statsd-emscripten.cc"],
+        "@bazel_tools//src/conditions:host_windows": ["statsd-emscripten.cc"],
         "//conditions:default": ["statsd.cc"],
     }),
     hdrs = [
@@ -18,6 +19,7 @@ cc_library(
         "//sorbet_version",
     ] + select({
         "@platforms//cpu:wasm32": [],
+        "@bazel_tools//src/conditions:host_windows": [],
         "//conditions:default": ["@statsd"],
     }),
 )

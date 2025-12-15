@@ -105,10 +105,13 @@ cc_library(
         ":typedruby_debug_bison",
     ],
     hdrs = glob(["include/**/*.hh"]),
-    copts = [
-        "-Wno-unused-const-variable",
-        "-Wno-unused-but-set-variable",
-    ] + select({
+    copts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            "-Wno-unused-const-variable",
+            "-Wno-unused-but-set-variable",
+        ],
+    }) + select({
         # What we really want here is to say "it's never ok to use -Os, because
         # that will take 2+ minutes to compile." We have to do this to override
         # the .bazelrc options.

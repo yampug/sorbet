@@ -61,3 +61,24 @@ dist/macos/libsorbet.dylib
 lib/.task
 
 /crystal/libsorbet.dylib
+
+# Windows Build Artifacts
+*.exe
+*.dll
+*.obj
+*.pdb
+*.ilk
+*.lib
+*.exp
+*.log
+*.i
+test.rb
+test.cc
+fix_literals.sed
+verify_build.ps1
+sorbet_version/build_scm_revision
+
+lib/output1
+lib/output3
+lib/output2
+lib/protobuf.tar.gz

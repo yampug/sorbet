@@ -25,19 +25,31 @@ public:
         from.sanityCheckSubstitution(*this);
         switch (from.kind()) {
             case NameKind::UTF8:
-                ENFORCE(from.utf8Index() < utf8NameSubstitution.size(),
-                        "utf8 name substitution index out of bounds, got {} where substitution size is {}",
-                        std::to_string(from.rawId()), std::to_string(utf8NameSubstitution.size()));
+                if (::sorbet::debug_mode) {
+                    if (!(from.utf8Index() < utf8NameSubstitution.size())) {
+                         ::sorbet::Exception::enforce_handler("from.utf8Index() < utf8NameSubstitution.size()", __FILE__, __LINE__, 
+                            "utf8 name substitution index out of bounds, got {} where substitution size is {}",
+                            std::to_string(from.rawId()), std::to_string(utf8NameSubstitution.size()));
+                    }
+                }
                 return utf8NameSubstitution[from.utf8Index()];
             case NameKind::CONSTANT:
-                ENFORCE(from.constantIndex() < constantNameSubstitution.size(),
-                        "constant name substitution index out of bounds, got {} where substitution size is {}",
-                        std::to_string(from.rawId()), std::to_string(constantNameSubstitution.size()));
+                if (::sorbet::debug_mode) {
+                    if (!(from.constantIndex() < constantNameSubstitution.size())) {
+                         ::sorbet::Exception::enforce_handler("from.constantIndex() < constantNameSubstitution.size()", __FILE__, __LINE__, 
+                            "constant name substitution index out of bounds, got {} where substitution size is {}",
+                            std::to_string(from.rawId()), std::to_string(constantNameSubstitution.size()));
+                    }
+                }
                 return constantNameSubstitution[from.constantIndex()];
             case NameKind::UNIQUE:
-                ENFORCE(from.uniqueIndex() < uniqueNameSubstitution.size(),
-                        "unique name substitution index out of bounds, got {} where substitution size is {}",
-                        std::to_string(from.rawId()), std::to_string(uniqueNameSubstitution.size()));
+                if (::sorbet::debug_mode) {
+                    if (!(from.uniqueIndex() < uniqueNameSubstitution.size())) {
+                         ::sorbet::Exception::enforce_handler("from.uniqueIndex() < uniqueNameSubstitution.size()", __FILE__, __LINE__, 
+                            "unique name substitution index out of bounds, got {} where substitution size is {}",
+                            std::to_string(from.rawId()), std::to_string(uniqueNameSubstitution.size()));
+                    }
+                }
                 return uniqueNameSubstitution[from.uniqueIndex()];
         }
     }

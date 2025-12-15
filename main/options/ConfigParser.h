@@ -30,7 +30,8 @@ public:
      * Parse the config CLI args, config files and default `sorbet/config` file
      */
     static cxxopts::ParseResult parseConfig(std::shared_ptr<spdlog::logger> logger, int &argc, char **&argv,
-                                            cxxopts::Options options);
+                                            std::vector<std::string> &stringArgs, std::vector<char *> &argPtrs,
+                                            cxxopts::Options &options);
 };
 } // namespace sorbet::realmain::options
 #endif

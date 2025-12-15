@@ -6,10 +6,11 @@
 using namespace std;
 
 namespace sorbet::parser::Prism {
+namespace core = ::sorbet::core;
 
 using namespace std::literals::string_view_literals;
 
-parser::ParseResult Parser::run(core::MutableContext ctx, bool directlyDesugar, bool preserveConcreteSyntax) {
+::sorbet::parser::ParseResult Parser::run(core::MutableContext ctx, bool directlyDesugar, bool preserveConcreteSyntax) {
     auto file = ctx.file;
     auto source = file.data(ctx).source();
     Prism::Parser parser{source};
@@ -19,7 +20,7 @@ parser::ParseResult Parser::run(core::MutableContext ctx, bool directlyDesugar, 
     auto translatedTree =
         Prism::Translator(parser, ctx, parseResult.parseErrors, directlyDesugar, preserveConcreteSyntax)
             .translate(parseResult.getRawNodePointer());
-    return parser::ParseResult{move(translatedTree), move(parseResult.commentLocations)};
+    return ::sorbet::parser::ParseResult{move(translatedTree), move(parseResult.commentLocations)};
 }
 
 pm_parser_t *Parser::getRawParserPointer() {
@@ -193,4 +194,4 @@ string Parser::prettyPrint(pm_node_t *node) const {
     pm_buffer_free(&buffer);
     return result;
 }
-}; // namespace sorbet::parser::Prism
+}; // namespace parser::Prism

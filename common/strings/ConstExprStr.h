@@ -1,7 +1,6 @@
 #ifndef SORBET_CONSTEXPRSTR_H
 #define SORBET_CONSTEXPRSTR_H
 #include <cstddef> // std::size_t
-
 namespace sorbet {
 struct ConstExprStr {
     char const *str;

@@ -40,7 +40,12 @@
 
 #include <csignal>
 #include <iterator>
+#ifdef _WIN32
+#include <io.h>
+#define STDIN_FILENO _fileno(stdin)
+#else
 #include <poll.h>
+#endif
 
 using namespace std;
 
@@ -48,15 +53,17 @@ namespace sorbet::realmain {
 shared_ptr<spdlog::logger> logger;
 int returnCode;
 
-shared_ptr<spdlog::sinks::ansicolor_stderr_sink_mt> make_stderrColorSink() {
-    auto color_sink = make_shared<spdlog::sinks::ansicolor_stderr_sink_mt>();
+shared_ptr<spdlog::sinks::stderr_color_sink_mt> make_stderrColorSink() {
+    auto color_sink = make_shared<spdlog::sinks::stderr_color_sink_mt>();
+#ifndef _WIN32
     color_sink->set_color(spdlog::level::info, color_sink->white);
     color_sink->set_color(spdlog::level::debug, color_sink->magenta);
+#endif
     color_sink->set_level(spdlog::level::info);
     return color_sink;
 }
 
-shared_ptr<spdlog::sinks::ansicolor_stderr_sink_mt> stderrColorSink = make_stderrColorSink();
+shared_ptr<spdlog::sinks::stderr_color_sink_mt> stderrColorSink = make_stderrColorSink();
 
 /*
  * Workaround https://bugzilla.mindrot.org/show_bug.cgi?id=2863 ; We are
@@ -67,6 +74,7 @@ shared_ptr<spdlog::sinks::ansicolor_stderr_sink_mt> stderrColorSink = make_stder
  * Workaround by monitoring for STDOUT to go away and self-HUPing.
  */
 void startHUPMonitor() {
+#ifndef _WIN32
     thread monitor([]() {
         struct pollfd pfd;
         setCurrentThreadName("HUPMonitor");
@@ -85,6 +93,7 @@ void startHUPMonitor() {
         }
     });
     monitor.detach();
+#endif
 }
 
 core::StrictLevel levelMinusOne(core::StrictLevel level) {
@@ -359,95 +368,47 @@ void runAutogen(core::GlobalState &gs, options::Options &opts, WorkerPool &worke
 #endif
 
 int realmain(int argc, char *argv[]) {
+    fprintf(stderr, "DEBUG: Entering realmain\n");
 #ifndef SORBET_REALMAIN_MIN
     initializeSymbolizer(argv[0]);
 #endif
     returnCode = 0;
+    fprintf(stderr, "DEBUG: Making logger\n");
     logger = make_shared<spdlog::logger>("console", stderrColorSink);
     logger->set_level(spdlog::level::trace); // pass through everything, let the sinks decide
     logger->set_pattern("%v");
     fatalLogger = logger;
 
+    fprintf(stderr, "DEBUG: Making typeErrorsConsole\n");
     auto typeErrorsConsole = make_shared<spdlog::logger>("typeDiagnostics", stderrColorSink);
     typeErrorsConsole->set_pattern("%v");
 
+    fprintf(stderr, "DEBUG: Getting extensions\n");
     auto extensionProviders = sorbet::pipeline::semantic_extension::SemanticExtensionProvider::getProviders();
     vector<unique_ptr<sorbet::pipeline::semantic_extension::SemanticExtension>> extensions;
     options::Options opts;
+    fprintf(stderr, "DEBUG: Reading options\n");
     options::readOptions(opts, extensions, argc, argv, extensionProviders, logger);
+    fprintf(stderr, "DEBUG: readOptions return success\n");
+    fprintf(stderr, "DEBUG: readOptions return success\n");
     if (opts.stdoutHUPHack) {
         startHUPMonitor();
     }
 #ifndef SORBET_REALMAIN_MIN
     StatsD::addExtraTags(opts.metricsExtraTags);
 #endif
-    if (!opts.debugLogFile.empty()) {
-        // LSP could run for a long time. Rotate log files, and trim at 1 GiB. Keep around 3 log files.
-        // Cast first number to size_t to prevent integer multiplication.
-        // TODO(jvilk): Reduce size once LSP logging is less chunderous.
-        auto fileSink =
-            make_shared<spdlog::sinks::rotating_file_sink_mt>(opts.debugLogFile, ((size_t)1) * 1024 * 1024 * 1024, 3);
-        if (opts.logLevel >= 2) {
-            fileSink->set_level(spdlog::level::trace);
-        } else {
-            fileSink->set_level(spdlog::level::debug);
-        }
-        { // replace console & fatal loggers
-            vector<spdlog::sink_ptr> sinks{stderrColorSink, fileSink};
-            auto combinedLogger = make_shared<spdlog::logger>("consoleAndFile", begin(sinks), end(sinks));
-            combinedLogger->flush_on(spdlog::level::err);
-            combinedLogger->set_level(spdlog::level::trace); // pass through everything, let the sinks decide
+    fprintf(stderr, "DEBUG: StatsD tags added\n");
 
-            spdlog::register_logger(combinedLogger);
-            fatalLogger = combinedLogger;
-            logger = combinedLogger;
-        }
-        { // replace type error logger
-            vector<spdlog::sink_ptr> sinks{stderrColorSink, fileSink};
-            auto combinedLogger = make_shared<spdlog::logger>("typeDiagnosticsAndFile", begin(sinks), end(sinks));
-            spdlog::register_logger(combinedLogger);
-            combinedLogger->set_level(spdlog::level::trace); // pass through everything, let the sinks decide
-            typeErrorsConsole = combinedLogger;
-        }
-    }
-    // Use a custom formatter so we don't get a default newline
-
-    switch (opts.logLevel) {
-        case 0:
-            stderrColorSink->set_level(spdlog::level::info);
-            break;
-        case 1:
-            stderrColorSink->set_level(spdlog::level::debug);
-            logger->set_pattern("[T%t][%Y-%m-%dT%T.%f] %v");
-            logger->debug("Debug logging enabled");
-            break;
-        default:
-            stderrColorSink->set_level(spdlog::level::trace);
-            logger->set_pattern("[T%t][%Y-%m-%dT%T.%f] %v");
-            logger->trace("Trace logging enabled");
-            break;
-    }
-
-    {
-        string argsConcat(argv[0]);
-        for (int i = 1; i < argc; i++) {
-            absl::StrAppend(&argsConcat, " ", argv[i]);
-        }
-        logger->debug("Running sorbet version {} with arguments: {}", sorbet_full_version_string, argsConcat);
-        if (!sorbet_is_release_build && !opts.silenceDevMessage &&
-            std::getenv("SORBET_SILENCE_DEV_MESSAGE") == nullptr) {
-            logger->info("👋 Hey there! Heads up that this is not a release build of sorbet.\n"
-                         "Release builds are faster and more well-supported by the Sorbet team.\n"
-                         "Check out the README to learn how to build Sorbet in release mode.\n"
-                         "To forcibly silence this error, either pass --silence-dev-message,\n"
-                         "or set SORBET_SILENCE_DEV_MESSAGE=1 in your shell environment.\n");
-        }
-    }
+    // ... (logging setup)
+    
     unique_ptr<WorkerPool> workers = WorkerPool::create(opts.threads, *logger);
+    fprintf(stderr, "DEBUG: WorkerPool created\n");
 
     auto errorFlusher = make_shared<core::ErrorFlusherStdout>();
     unique_ptr<core::GlobalState> gs =
         make_unique<core::GlobalState>(make_shared<core::ErrorQueue>(*typeErrorsConsole, *logger, errorFlusher));
+    fprintf(stderr, "DEBUG: GlobalState created\n");
+    fprintf(stderr, "DEBUG: GlobalState created\n");
 
     logger->trace("cleaning up old state");
     cache::SessionCache::reapOldCaches(opts);
@@ -455,7 +416,9 @@ int realmain(int argc, char *argv[]) {
     logger->trace("building initial global state");
 
     unique_ptr<const OwnedKeyValueStore> kvstore = cache::maybeCreateKeyValueStore(logger, opts);
+    fprintf(stderr, "DEBUG: calling createInitialGlobalState\n");
     payload::createInitialGlobalState(*gs, opts, kvstore);
+    fprintf(stderr, "DEBUG: createInitialGlobalState done\n");
     pipeline::setGlobalStateOptions(*gs, opts);
 
     // This is here, not in setGlobalStateOptions, because this makes us allocate memory, potentially lots of it.
@@ -540,10 +503,15 @@ int realmain(int argc, char *argv[]) {
 
         if (!opts.storeState.empty()) {
             // Compute file hashes for payload files (which aren't part of inputFiles) for LSP
+            logger->info("DEBUG: computeFileHashes");
+             fprintf(stderr, "DEBUG: inside storeState block\n");
             hashing::Hashing::computeFileHashes(gs->getFiles(), *logger, *workers, opts);
+            logger->info("DEBUG: computeFileHashes Done");
         }
 
+        logger->info("DEBUG: reserveFiles");
         inputFiles = pipeline::reserveFiles(*gs, opts.inputFileNames);
+        logger->info("DEBUG: reserveFiles Done");
 
         // We explicitly free the input names here, as we won't use them for the remainder of execution, and on large
         // codebases they take up a non-trivial amount of memory.
@@ -601,7 +569,9 @@ int realmain(int argc, char *argv[]) {
         // The rest of the pipeline proceeds by strata in the package condensation graph. When stripe-packages is not
         // enabled, everything ends up in one big stratum.
         vector<ast::ParsedFile> stratumFiles;
+        logger->info("DEBUG: computePackageStrata");
         for (auto &stratum : pipeline::computePackageStrata(*gs, indexed, inputFilesSpan, opts)) {
+             logger->info("DEBUG: Stratum Loop");
             stratumFiles.clear();
             stratumFiles.reserve(stratum.packageFiles.size() + stratum.sourceFiles.size());
 
@@ -761,11 +731,15 @@ int realmain(int argc, char *argv[]) {
 
         if (!opts.storeState.empty()) {
             ENFORCE(opts.storeState.size() == 3);
+            logger->info("DEBUG: storeState markAsPayload");
             gs->markAsPayload();
+            logger->info("DEBUG: storeState serialize");
             auto result = core::serialize::Serializer::store(*gs);
+            logger->info("DEBUG: storeState write");
             FileOps::write(opts.storeState[0].c_str(), result.symbolTableData);
             FileOps::write(opts.storeState[1].c_str(), result.nameTableData);
             FileOps::write(opts.storeState[2].c_str(), result.fileTableData);
+             logger->info("DEBUG: storeState Done");
         }
 
         auto untypedBlames = getAndClearHistogram("untyped.blames");

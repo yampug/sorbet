@@ -1,6 +1,9 @@
 #ifndef SORBET_PARSER_PRISM_FACTORY_H
 #define SORBET_PARSER_PRISM_FACTORY_H
 
+
+#pragma message("Reading parser/prism/Factory.h")
+
 #include "absl/types/span.h"
 #include "common/common.h"
 #include "core/LocOffsets.h"
@@ -9,18 +12,29 @@
 extern "C" {
 #include "prism.h"
 }
+#ifdef _WIN32
+#undef VOID
+#endif
+
+
+
+
+
+
+
 
 namespace sorbet::parser::Prism {
+namespace core = ::sorbet::core;
 
 // Forward declarations
 class Parser;
 
 class Factory {
 private:
-    Parser &parser;
+    Parser &m_parser;
 
 public:
-    Factory(Parser &parser) : parser(parser) {}
+    Factory(Parser &parser) : m_parser(parser) {}
 
     template <typename T> T *allocateNode() const {
         void *memory = this->malloc(sizeof(T));
@@ -120,6 +134,8 @@ private:
     pm_node_list_t copyNodesToList(const absl::Span<pm_node_t *> nodes) const;
 };
 
-} // namespace sorbet::parser::Prism
+} // namespace parser::Prism
 
 #endif // SORBET_PARSER_PRISM_FACTORY_H
+
+

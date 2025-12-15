@@ -843,6 +843,29 @@ void emitNodeHeader(ostream &out, NodeDef &node) {
     out << "class " << node.name << " final : public Node {" << '\n';
     out << "public:" << '\n';
 
+    if (node.name == "Send") {
+      out << "    struct Flags {" << '\n';
+      out << "        bool isPrivateOk = false;" << '\n';
+      out << "        bool hasBlock = false;" << '\n';
+      out << "        bool isRewriterSynthesized = false;" << '\n';
+      out << "    };" << '\n';
+    }
+    if (node.name == "MethodDef") {
+      out << "    struct Flags {" << '\n';
+      out << "        bool isRewriterSynthesized = false;" << '\n';
+      out << "        bool isSelfMethod = false;" << '\n'; // Inferring this one just in case, though Helper uses separate arg
+      out << "    };" << '\n';
+    }
+
+    for (auto &arg : node.fields) {
+        if (arg.type == FieldType::NodeVec) {
+            std::string storeName = arg.name;
+            for (auto &c : storeName) c = toupper(c);
+            storeName += "_store";
+            out << "    using " << storeName << " = NodeVec;" << '\n';
+        }
+    }
+
     // generate constructor
     out << "    " << node.name << "(core::LocOffsets loc";
     for (auto &arg : node.fields) {
@@ -1175,9 +1198,11 @@ int main(int argc, char **argv) {
             cerr << "unable to open " << argv[1] << '\n';
             return 1;
         }
+        header << "namespace sorbet {\nnamespace parser {\n";
         for (auto &node : nodes) {
             emitNodeHeader(header, node);
         }
+        header << "}\n}\n";
     }
 
     {

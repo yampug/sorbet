@@ -8,6 +8,10 @@
 #include <memory>
 #include <string>
 
+#ifdef _WIN32
+#define __attribute__(x)
+#endif
+
 namespace sorbet {
 extern std::shared_ptr<spdlog::logger> fatalLogger;
 class SorbetException : public std::logic_error {

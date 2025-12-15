@@ -23,10 +23,12 @@ void ConstantAssumeType::run(core::MutableContext ctx, ast::Assign *asgn) {
         return;
     }
 
+
     auto send = ast::cast_tree<ast::Send>(asgn->rhs);
     if (send == nullptr) {
         return;
     }
+
 
     if (send->fun != core::Names::new_()) {
         return;
@@ -37,7 +39,8 @@ void ConstantAssumeType::run(core::MutableContext ctx, ast::Assign *asgn) {
     }
 
     auto type = send->recv.deepCopy();
-    asgn->rhs = ast::MK::AssumeType(asgn->rhs.loc(), move(asgn->rhs), move(type));
+    auto loc = asgn->rhs.loc();
+    asgn->rhs = ast::MK::AssumeType(loc, move(asgn->rhs), move(type));
 }
 
 }; // namespace sorbet::rewriter

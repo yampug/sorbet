@@ -1,0 +1,23 @@
+--- ragel/main.cpp
++++ ragel/main.cpp
+@@ -24,7 +24,11 @@
+ #include <iostream>
+ #include <fstream>
+-#include <unistd.h>
++#ifdef _WIN32
++#include <io.h>
++#include <process.h>
++#else
++#include <unistd.h>
++#endif
+ #include <time.h>
+ 
+ using std::istream;
+--- /dev/null
++++ bin/BUILD
+@@ -0,0 +1,5 @@
++cc_binary(
++    name = "ragel",
++    visibility = ["//visibility:public"],
++    deps = ["//:ragel_lib"],
++)

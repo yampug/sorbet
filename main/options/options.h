@@ -1,5 +1,6 @@
 #ifndef RUBY_TYPER_OPTIONS_H
 #define RUBY_TYPER_OPTIONS_H
+#pragma message("Reading options.h")
 #include "common/EarlyReturnWithCode.h"
 #include "common/FileSystem.h"
 #include "common/common.h"
@@ -40,6 +41,9 @@ private:
     std::shared_ptr<GuardedState> state;
 };
 
+#ifdef AST
+#undef AST
+#endif
 struct Printers {
     PrinterConfig ParseTree;
     PrinterConfig ParseTreeJson;

@@ -185,7 +185,7 @@ public:
     Tag tag() const noexcept {
         ENFORCE(ptr != 0);
 
-        auto value = reinterpret_cast<tagged_storage>(ptr) & TAG_MASK;
+        auto value = static_cast<tagged_storage>(ptr) & TAG_MASK;
         return static_cast<Tag>(value);
     }
 

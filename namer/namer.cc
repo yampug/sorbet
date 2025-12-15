@@ -202,9 +202,9 @@ public:
             if (packageSpecClass != nullptr) {
                 ENFORCE(!foundDefs->package.has_value(), "PackageSpec Rewriter should rewrite at most one spec");
                 foundDefs->package = core::FoundPackage{
-                    .owner = ownerStack.back(),
-                    .loc = klass.loc,
-                    .declLoc = klass.declLoc,
+                    ownerStack.back(),
+                    klass.loc,
+                    klass.declLoc,
                 };
             }
         }

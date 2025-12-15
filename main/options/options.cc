@@ -15,12 +15,14 @@
 #include "core/errors/infer.h"
 #include "main/options/ConfigParser.h"
 #include "main/options/options.h"
-#include "options.h"
+// #include "options.h"
 #include "sorbet_version/sorbet_version.h"
 #include "third_party/licenses/licenses.h"
+#ifndef _WIN32
 #include <sys/ioctl.h>
-#include <sys/stat.h>
 #include <unistd.h>
+#endif
+#include <sys/stat.h>
 
 using namespace std;
 
@@ -28,6 +30,15 @@ namespace sorbet::realmain::options {
 
 namespace {
 
+#ifdef ERROR
+#undef ERROR
+#endif
+#ifdef INPUT
+#undef INPUT
+#endif
+#ifdef OUTPUT
+#undef OUTPUT
+#endif
 enum class Group {
     INPUT,
     OUTPUT,
@@ -347,11 +358,13 @@ buildOptions(const vector<pipeline::semantic_extension::SemanticExtensionProvide
     cxxopts::Options options("sorbet", "Sorbet: A fast, powerful typechecker designed for Ruby");
     string section;
 
-    struct winsize w;
     unsigned short defaultCols = 100;
+#ifndef _WIN32
+    struct winsize w;
     if (ioctl(STDERR_FILENO, TIOCGWINSZ, &w) != -1) {
         defaultCols = std::min(defaultCols, w.ws_col);
     }
+#endif
     options.set_width(defaultCols);
 
     // TODO(neil): we should mention how vector options work/can be used.
@@ -922,8 +935,11 @@ void readOptions(Options &opts,
                  shared_ptr<spdlog::logger> logger) noexcept(false) { // throw(EarlyReturnWithCode)
     Timer timeit(*logger, "readOptions");
     cxxopts::Options options = buildOptions(semanticExtensionProviders);
+    // Keep strings alive for ParseResult
+    vector<string> stringArgs;
+    vector<char *> argPtrs;
     try {
-        cxxopts::ParseResult raw = ConfigParser::parseConfig(logger, argc, argv, options);
+        cxxopts::ParseResult raw = ConfigParser::parseConfig(logger, argc, argv, stringArgs, argPtrs, options);
         if (raw["simulate-crash"].as<bool>()) {
             Exception::raise("simulated crash");
         }
@@ -931,6 +947,14 @@ void readOptions(Options &opts,
         while (opts.waitForDebugger && !stopInDebugger()) {
             // spin
         }
+        
+        // ... (rest of function)
+        
+        // Add probe at end of try block to see if we finish parsing
+        if (raw.count("allowed-extension") > 0) {
+             // ...
+        }
+
 
         if (raw.count("allowed-extension") > 0) {
             // Any use of `--allowed-extension` overrides the default.

@@ -16,8 +16,22 @@ static_assert(false, "Need c++17 to compile this codebase");
 #include "spdlog/spdlog.h"
 #include <stdint.h>
 #include <string>
+#include <vector>
 #include <string_view>
 #include <type_traits>
+
+#ifdef _WIN32
+using pid_t = int;
+// Windows defines VOID as a macro for void, which conflicts with Names::VOID
+#ifdef VOID
+#undef VOID
+#endif
+#ifdef Yield
+#undef Yield
+#endif
+#include <intrin.h>
+#define __builtin_trap() __debugbreak()
+#endif
 
 namespace sorbet {
 
@@ -80,7 +94,11 @@ constexpr bool skip_slow_enforce = false;
         X;                                                      \
     }
 
+#ifdef _WIN32
+constexpr bool skip_check_memory_layout = true;
+#else
 constexpr bool skip_check_memory_layout = debug_mode || emscripten_build;
+#endif
 
 template <typename ToCheck, std::size_t ExpectedSize, std::size_t RealSize = sizeof(ToCheck)> struct check_size {
     static_assert(skip_check_memory_layout || ExpectedSize == RealSize, "Size is off!");
@@ -152,9 +170,17 @@ template <class> inline constexpr bool always_false_v = false;
 std::string demangle(const char *mangled);
 
 /* use fast_sort */
+/* use fast_sort */
+#ifdef _WIN32
+#undef Yield
+#endif
+#ifndef _WIN32
 #pragma GCC poison sort c_sort
+#endif
 
 /* use absl::c_ alternatives */
+/* use absl::c_ alternatives */
+#ifndef _WIN32
 #pragma GCC poison any_of find_if linear_search min_element max_element iota all_of
 // I wish I could add replace and find, but those names are too generic
 //         accumulate upper_bound are used by <random>
@@ -170,17 +196,27 @@ std::string demangle(const char *mangled);
 #pragma GCC poison asprintf vasprintf
 #pragma GCC poison strncpy wcsncpy
 #pragma GCC poison strtok wcstok
+#endif
 
 /* Signal related */
+/* Signal related */
+#ifndef _WIN32
 #pragma GCC poison longjmp siglongjmp
 #pragma GCC poison setjmp sigsetjmp
+#endif
 
 /* File API's */
+/* File API's */
+#ifndef _WIN32
 #pragma GCC poison tmpnam tempnam
+#endif
 
 /* Misc */
+/* Misc */
+#ifndef _WIN32
 #pragma GCC poison cuserid
 #pragma GCC poison rexec rexec_af
+#endif
 
 #include "enforce_no_timer/EnforceNoTimer.h"
 #include "exception/Exception.h"

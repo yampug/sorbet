@@ -58,17 +58,23 @@ tasks:
       - ../dist/linux/libsorbet.so
 
   build:windows:
-    desc: Build libsorbet for Windows (.dll) - Requires Windows or MinGW toolchain
+    desc: Build libsorbet for Windows (.dll)
     cmds:
-      - echo "Windows builds require native Windows or MinGW cross-compilation toolchain"
-      - echo "Consider using GitHub Actions or a Windows VM for Windows builds"
-      - exit 1
+      - mkdir -p ../dist/windows
+      - bazel build //lib:libsorbet.dll
+      - cp -f bazel-bin/lib/libsorbet.dll ../dist/windows/
+    sources:
+      - sorbet_c_api.cc
+      - BUILD
+    generates:
+      - ../dist/windows/libsorbet.dll
 
   build:all:
     desc: Build libsorbet for all supported platforms
     cmds:
       - task: build:macos
       - task: build:linux
+      - task: build:windows
 
   clean:
     desc: Clean build artifacts

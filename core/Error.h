@@ -124,12 +124,19 @@ public:
 
     bool isCritical() const;
     std::string toString(const GlobalState &gs) const;
+#include "common/enforce_no_timer/EnforceNoTimer.h"
+
     Error(Loc loc, ErrorClass what, std::string header, std::vector<ErrorSection> sections,
           std::vector<AutocorrectSuggestion> autocorrects, bool isSilenced)
         : loc(loc), what(what), header(std::move(header)), isSilenced(isSilenced),
           autocorrects(std::move(autocorrects)), sections(sections) {
         ENFORCE(this->header.empty() || this->header.back() != '.', "Error headers should not end with a period");
-        ENFORCE(this->header.find('\n') == std::string::npos, "{} has a newline in it", this->header);
+        bool noNewline = this->header.find('\n') == std::string::npos;
+        if (::sorbet::debug_mode) {
+            if (!noNewline) {
+                 ::sorbet::Exception::enforce_handler("noNewline", __FILE__, __LINE__, "{} has a newline in it", this->header);
+            }
+        }
     }
 };
 

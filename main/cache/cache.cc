@@ -9,7 +9,14 @@
 #include "sorbet_version/sorbet_version.h"
 #include <charconv>
 #include <cstdio>
+#ifndef _WIN32
 #include <unistd.h>
+#else
+#include <process.h>
+#include <direct.h>
+#define getpid _getpid
+#define rmdir _rmdir
+#endif
 
 using namespace std;
 
@@ -269,8 +276,8 @@ void SessionCache::reapOldCaches(const options::Options &opts) {
 
         string_view pidStr = string_view(dir).substr(SESSION_DIR_PREFIX.size());
         pid_t pid = -1;
-        auto res = std::from_chars(pidStr.begin(), pidStr.end(), pid);
-        if (res.ec != std::errc{} || res.ptr != pidStr.end() || pid <= 0) {
+        auto res = std::from_chars(pidStr.data(), pidStr.data() + pidStr.size(), pid);
+        if (res.ec != std::errc{} || res.ptr != pidStr.data() + pidStr.size() || pid <= 0) {
             continue;
         }
 

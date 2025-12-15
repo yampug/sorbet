@@ -3,6 +3,13 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 # We define our externals here instead of directly in WORKSPACE
 def register_sorbet_dependencies():
     http_archive(
+        name = "bazel_features",
+        url = "https://github.com/bazel-contrib/bazel_features/releases/download/v1.38.0/bazel_features-v1.38.0.tar.gz",
+        sha256 = "07271d0f6b12633777b69020c4cb1eb67b1939c0cf84bb3944dc85cc250c0c01",
+        strip_prefix = "bazel_features-1.38.0",
+    )
+
+    http_archive(
         name = "platforms",
         url = "https://github.com/bazelbuild/platforms/releases/download/0.0.10/platforms-0.0.10.tar.gz",
         sha256 = "218efe8ee736d26a3572663b374a253c012b716d8af0c07e842e82f238a0a7ee",
@@ -14,6 +21,21 @@ def register_sorbet_dependencies():
         sha256 = "a643517b910c510c998a518e45a66f7f3460e5b32f80d64aa0021fed7c967d0f",
         build_file = "@com_stripe_ruby_typer//third_party:prism.BUILD",
         strip_prefix = "libprism-src",
+    )
+
+    http_archive(
+        name = "ragel_v6.10",
+        url = "http://www.colm.net/files/ragel/ragel-6.10.tar.gz",
+        sha256 = "5f156edb65d20b856d638dd9ee2dfb43285914d9aa2b6ec779dac0270cd56c3f",
+        strip_prefix = "ragel-6.10",
+        build_file = "@com_stripe_ruby_typer//third_party:ragel.BUILD",
+        patch_cmds = [
+            "sed -i 's|#include <unistd.h>|#ifdef _WIN32\\n#include <io.h>\\n#include <process.h>\\n#else\\n#include <unistd.h>\\n#endif|' ragel/main.cpp",
+            "mkdir -p bin",
+            "echo 'cc_binary(name = \"ragel\", visibility = [\"//visibility:public\"], deps = [\"//:ragel_lib\"])' > bin/BUILD",
+            "mkdir -p stub-config",
+            "echo '/* config.h stub */' > stub-config/config.h",
+        ],
     )
 
     http_archive(
@@ -62,12 +84,9 @@ def register_sorbet_dependencies():
     # This statement defines the @com_google_protobuf repo.
     http_archive(
         name = "com_google_protobuf",
-        url = "https://github.com/protocolbuffers/protobuf/archive/v3.27.0.zip",
-        sha256 = "913530eba097b17f58b9087fe9c4944de87b56913e3e340b91e317d1e6763dde",
-        strip_prefix = "protobuf-3.27.0",
-        patches = [
-            "@com_stripe_ruby_typer//third_party:com_google_protobuf/cpp_opts.bzl.patch",
-        ],
+        url = "https://github.com/protocolbuffers/protobuf/releases/download/v29.1/protobuf-29.1.tar.gz",
+        sha256 = "3d32940e975c4ad9b8ba69640e78f5527075bae33ca2890275bf26b853c0962c",
+        strip_prefix = "protobuf-29.1",
     )
 
     http_archive(
@@ -86,6 +105,9 @@ def register_sorbet_dependencies():
         strip_prefix = "lmdb-da9aeda08c3ff710a0d47d61a079f5a905b0a10a",
         patches = [
             "@com_stripe_ruby_typer//third_party:lmdb/strdup.patch",
+        ],
+        patch_cmds = [
+            "sed -i '1i #ifdef _WIN32\\n#define MDB_USE_ROBUST 0\\n#include <windows.h>\\ntypedef LONG NTSTATUS;\\n#endif' libraries/liblmdb/mdb.c",
         ],
     )
 
@@ -185,9 +207,35 @@ def register_sorbet_dependencies():
 
     http_archive(
         name = "rules_cc",
-        sha256 = "b6f34b3261ec02f85dbc5a8bdc9414ce548e1f5f67e000d7069571799cb88b25",
-        strip_prefix = "rules_cc-726dd8157557f1456b3656e26ab21a1646653405",
-        urls = ["https://github.com/bazelbuild/rules_cc/archive/726dd8157557f1456b3656e26ab21a1646653405.tar.gz"],
+        urls = ["https://github.com/bazelbuild/rules_cc/releases/download/0.0.17/rules_cc-0.0.17.tar.gz"],
+        sha256 = "abc605dd850f813bb37004b77db20106a19311a96b2da1c92b789da529d28fe1",
+        strip_prefix = "rules_cc-0.0.17",
+    )
+
+    http_archive(
+        name = "rules_java",
+        urls = ["https://github.com/bazelbuild/rules_java/releases/download/9.3.0/rules_java-9.3.0.tar.gz"],
+        sha256 = "6ef26d4f978e8b4cf5ce1d47532d70cb62cd18431227a1c8007c8f7843243c06",
+    )
+
+    http_archive(
+        name = "rules_python",
+        url = "https://github.com/bazelbuild/rules_python/releases/download/1.7.0/rules_python-1.7.0.tar.gz",
+        sha256 = "f609f341d6e9090b981b3f45324d05a819fd7a5a56434f849c761971ce2c47da",
+        strip_prefix = "rules_python-1.7.0",
+    )
+
+    http_archive(
+        name = "rules_license",
+        url = "https://github.com/bazelbuild/rules_license/releases/download/1.0.0/rules_license-1.0.0.tar.gz",
+        sha256 = "26d4021f6898e23b82ef953078389dd49ac2b5618ac564ade4ef87cced147b38",
+    )
+
+    http_archive(
+        name = "rules_shell",
+        url = "https://github.com/bazelbuild/rules_shell/releases/download/v0.6.1/rules_shell-v0.6.1.tar.gz",
+        sha256 = "e6b87c89bd0b27039e3af2c5da01147452f240f75d505f5b6880874f31036307",
+        strip_prefix = "rules_shell-0.6.1",
     )
 
     # TODO(jez) We keep our changes on the `sorbet` branch of `sorbet/bazel-toolchain`
@@ -266,6 +314,7 @@ def register_sorbet_dependencies():
         url = "https://github.com/jmillikin/rules_bison/archive/478079b28605a38000eaf83719568d756b3383a0.zip",
         sha256 = "d662d200f4e2a868f6873d666402fa4d413f07ba1a433591c5f60ac601157fb9",
         strip_prefix = "rules_bison-478079b28605a38000eaf83719568d756b3383a0",
+        patches = ["@com_stripe_ruby_typer//third_party:rules_bison_windows.patch"],
     )
 
     http_archive(
@@ -284,8 +333,8 @@ def register_sorbet_dependencies():
 
     http_archive(
         name = "bazel_skylib",
-        sha256 = "cd55a062e763b9349921f0f5db8c3933288dc8ba4f76dd9416aac68acee3cb94",
-        url = "https://github.com/bazelbuild/bazel-skylib/releases/download/1.5.0/bazel-skylib-1.5.0.tar.gz",
+        sha256 = "bc283cdfcd526a52c3201279cda4bc298652efa898b10b4db0837dc51652756f",
+        url = "https://github.com/bazelbuild/bazel-skylib/releases/download/1.7.1/bazel-skylib-1.7.1.tar.gz",
     )
 
     http_archive(

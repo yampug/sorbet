@@ -26,7 +26,9 @@ struct formatter<arg_map_join<It, Char, UnaryOp, UnaryOpResult>, Char> : formatt
         if (it != value.end) {
             out = base::format(std::invoke(value.mapper, *it++), ctx);
             while (it != value.end) {
-                out = std::copy(value.sep.begin(), value.sep.end(), out);
+                for (auto sym : value.sep) {
+                    *out++ = sym;
+                }
                 ctx.advance_to(out);
                 out = base::format(std::invoke(value.mapper, *it++), ctx);
             }

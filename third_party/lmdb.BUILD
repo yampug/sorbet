@@ -10,10 +10,13 @@ cc_library(
         "libraries/liblmdb/lmdb.h",
         "libraries/liblmdb/midl.h",
     ],
-    copts = [
-        "-Wno-implicit-fallthrough",
-        "-Wno-unused-but-set-variable",
-    ],
+    copts = select({
+        "@platforms//os:windows": ["/DMDB_USE_ROBUST=0"],
+        "//conditions:default": [
+            "-Wno-implicit-fallthrough",
+            "-Wno-unused-but-set-variable",
+        ],
+    }),
     includes = [
         "libraries/liblmdb/",
     ],

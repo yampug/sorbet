@@ -1,6 +1,8 @@
 #include "os.h"
 #include <climits>
+#ifndef _WIN32
 #include <pthread.h>
+#endif
 #if __has_feature(address_sanitizer)
 #include <sanitizer/lsan_interface.h>
 #endif
@@ -23,6 +25,18 @@ unique_ptr<Joinable> runInAThread(string_view threadName, function<void()> funct
 #ifdef EMSCRIPTEN
     throw logic_error("Creating threads in unsupported in EMSCRIPTEN");
 #endif
+#ifdef _WIN32
+    unique_ptr<Joinable> res = make_unique<Joinable>();
+    res->realFunction = move(function);
+    res->originalThreadName = string(threadName);
+
+    Joinable *joinablePTR = res.get();
+    
+    // Windows implementation using std::thread, ignoring stack size and affinity for now
+    res->thread = std::thread(&Joinable::trampoline, joinablePTR);
+    
+    return res;
+#else
     // AFAIK this should all be:
     //    - defined behaviour
     //    - available on all posix systems
@@ -74,6 +88,7 @@ unique_ptr<Joinable> runInAThread(string_view threadName, function<void()> funct
         bindThreadToCore(thread, *bindToCore);
     }
     return res;
+#endif
 }
 
 void intentionallyLeakMemory(void *ptr) {

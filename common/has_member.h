@@ -19,9 +19,9 @@ template <class> struct sfinae_true : std::true_type {};
  *
  * Adapted from https://stackoverflow.com/a/9154394
  */
-#define GENERATE_HAS_MEMBER(name, arg_types...)                                                        \
+#define GENERATE_HAS_MEMBER(name, ...)                                                        \
     template <class T>                                                                                 \
-    static constexpr auto __has_##name(int)->sfinae_true<decltype(std::declval<T>().name(arg_types))>; \
+    static constexpr auto __has_##name(int)->sfinae_true<decltype(std::declval<T>().name(__VA_ARGS__))>; \
     template <class> static constexpr auto __has_##name(long)->std::false_type;                        \
     template <class T> static constexpr bool HAS_MEMBER_##name() { return decltype(__has_##name<T>(0)){}; }
 
@@ -37,8 +37,8 @@ template <class> struct sfinae_true : std::true_type {};
  * CALL_MEMBER_toString<core::NameRef>::call(name, gs); // calls name.toString(gs)
  * CALL_MEMBER_toString<int>::call(10, gs); // returns ""
  */
-#define GENERATE_CALL_MEMBER(method_name, default_behavior, arg_types...)                                   \
-    GENERATE_HAS_MEMBER(method_name, arg_types)                                                             \
+#define GENERATE_CALL_MEMBER(method_name, default_behavior, ...)                                   \
+    GENERATE_HAS_MEMBER(method_name, __VA_ARGS__)                                                             \
     template <typename T, bool has> class CALL_MEMBER_impl_##method_name {                                  \
     public:                                                                                                 \
         template <class... Args> static decltype(auto) call(T &self, Args &&...args) {                      \

@@ -1,7 +1,10 @@
-BLAKE2_COPTS = [
-    "-Wno-unused-const-variable",
-    "-Wno-unused-function",
-]
+BLAKE2_COPTS = select({
+    "@platforms//os:windows": [],
+    "//conditions:default": [
+        "-Wno-unused-const-variable",
+        "-Wno-unused-function",
+    ],
+})
 
 genrule(
     name = "stub_config",
@@ -21,7 +24,10 @@ cc_library(
         "src/blake2.h",
     ],
     copts = BLAKE2_COPTS,
-    defines = ["SUFFIX="],
+    defines = ["SUFFIX="] + select({
+        "@platforms//os:windows": ["__SSE2__"],
+        "//conditions:default": [],
+    }),
     includes = [
         "src",
     ],

@@ -11,8 +11,14 @@
 #include <csignal>
 #include <cstdarg>
 #include <cstdio>
+#ifndef _WIN32
 #include <cxxabi.h>
+#endif
+#ifdef _WIN32
+#include "common/dirent_win.h"
+#else
 #include <dirent.h>
+#endif
 #include <exception>
 #include <memory>
 #include <variant>
@@ -174,6 +180,17 @@ bool sorbet::FileOps::hasAllowedExtension(string_view path, const UnorderedSet<s
 }
 
 int sorbet::FileOps::readFd(int fd, absl::Span<char> output, int timeoutMs) {
+#ifdef _WIN32
+    HANDLE h = (HANDLE)_get_osfhandle(fd);
+    if (h != INVALID_HANDLE_VALUE) {
+        DWORD res = WaitForSingleObject(h, timeoutMs);
+        if (res == WAIT_TIMEOUT) {
+            return 0;
+        } else if (res == WAIT_FAILED) {
+            return -1;
+        }
+    }
+#else
     // Prepare to use select()
     fd_set set;
     FD_ZERO(&set);
@@ -190,8 +207,13 @@ int sorbet::FileOps::readFd(int fd, absl::Span<char> output, int timeoutMs) {
         // A timeout (0) or error (<0) occurred
         return rv;
     }
+#endif
 
+#ifdef _WIN32
+    auto read = ::_read(fd, output.data(), static_cast<unsigned int>(output.size()));
+#else
     auto read = ::read(fd, output.data(), output.size());
+#endif
     if (read <= 0) {
         // An error occurred.
         return -2;
@@ -616,7 +638,11 @@ string exec(string cmd) {
 }
 
 string demangle(const char *mangled) {
+#ifdef _WIN32
+    return string(mangled);
+#else
     int status;
     unique_ptr<char[], void (*)(void *)> result(abi::__cxa_demangle(mangled, nullptr, nullptr, &status), free);
     return result.get() != nullptr ? string(result.get()) : "error occurred";
+#endif
 }

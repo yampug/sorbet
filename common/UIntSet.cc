@@ -1,4 +1,12 @@
 #include "common/UIntSet.h"
+#include "common/common.h"
+
+#ifdef _MSC_VER
+#include <intrin.h>
+#define __builtin_popcount __popcnt
+#endif
+
+using namespace std;
 
 namespace sorbet {
 

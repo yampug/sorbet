@@ -55,6 +55,7 @@ cc_library(
         "//ast",
         "//common/kvstore",
         "//common/statsd",
+        "//common/timers",
         "//common/web_tracer_framework:tracing",
         "//core",
         "//core/proto",

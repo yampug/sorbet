@@ -21,6 +21,12 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 
+#ifdef _WIN32
+    #define SORBET_API __declspec(dllexport)
+#else
+    #define SORBET_API
+#endif
+
 extern "C" {
 
 struct SorbetState {
@@ -102,7 +108,7 @@ static std::vector<std::string> parseArgsJson(const char *args_json) {
 }
 
 // Initialize a new Sorbet session
-SorbetState *sorbet_new(const char *args_json) {
+SORBET_API SorbetState *sorbet_new(const char *args_json) {
     std::vector<std::string> args = parseArgsJson(args_json);
 
     // Extract root directory from args (last argument) and remove it so it's not double-counted
@@ -144,7 +150,7 @@ SorbetState *sorbet_new(const char *args_json) {
 }
 
 // Initialize a new Sorbet session (multi-threaded)
-SorbetState *sorbet_new_mt(const char *args_json, int num_threads) {
+SORBET_API SorbetState *sorbet_new_mt(const char *args_json, int num_threads) {
     std::vector<std::string> args = parseArgsJson(args_json);
 
     // Extract root directory from args (last argument) and remove it so it's not double-counted
@@ -191,7 +197,7 @@ SorbetState *sorbet_new_mt(const char *args_json, int num_threads) {
 }
 
 // Send an LSP message (JSON) to Sorbet and get the response (JSON)
-char *sorbet_send(SorbetState *state, const char *message) {
+SORBET_API char *sorbet_send(SorbetState *state, const char *message) {
     if (!state) {
         return nullptr;
     }
@@ -232,7 +238,7 @@ char *sorbet_send(SorbetState *state, const char *message) {
 }
 
 // Send multiple LSP messages in batch
-char *sorbet_send_batch(SorbetState *state, const char **messages, int count) {
+SORBET_API char *sorbet_send_batch(SorbetState *state, const char **messages, int count) {
     if (!state || !messages || count <= 0) {
         return nullptr;
     }
@@ -300,14 +306,14 @@ char *sorbet_send_batch(SorbetState *state, const char **messages, int count) {
 }
 
 // Free a string returned by sorbet_send or sorbet_send_batch
-void sorbet_free_string(char *str) {
+SORBET_API void sorbet_free_string(char *str) {
     if (str) {
         free(str);
     }
 }
 
 // Free the Sorbet session
-void sorbet_free(SorbetState *state) {
+SORBET_API void sorbet_free(SorbetState *state) {
     if (state) {
         delete state;
     }

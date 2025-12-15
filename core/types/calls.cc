@@ -2639,11 +2639,11 @@ private:
         InlinedVector<const TypeAndOrigins *, 2> sendArgs;
         InlinedVector<LocOffsets, 2> sendArgLocs;
         CallLocs sendLocs{
-            .file = file,
-            .call = blockArgLoc,
-            .receiver = blockArgLoc,
-            .fun = blockArgLoc.copyWithZeroLength(),
-            .args = sendArgLocs,
+            file,
+            blockArgLoc,
+            blockArgLoc,
+            blockArgLoc.copyWithZeroLength(),
+            sendArgLocs,
         };
         DispatchArgs innerArgs{core::Names::toProc(),
                                sendLocs,

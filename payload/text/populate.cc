@@ -3,16 +3,19 @@
 #include "core/Unfreeze.h"
 #include "main/pipeline/pipeline.h"
 #include "payload/text/text.h"
+#include <cstdio>
 using namespace std;
 
 namespace sorbet::rbi {
 void populateRBIsInto(core::GlobalState &gs) {
+    fprintf(stderr, "DEBUG: populateRBIsInto start\n");
     gs.initEmpty();
     gs.ensureCleanStrings = true;
 
     vector<core::FileRef> payloadFiles;
     {
         core::UnfreezeFileTable fileTableAccess(gs);
+        fprintf(stderr, "DEBUG: populateRBIsInto loop start\n");
         for (auto &p : rbi::all()) {
             auto file = gs.enterFile(p.first, p.second);
             file.data(gs).sourceType = core::File::Type::PayloadGeneration;
@@ -20,9 +23,14 @@ void populateRBIsInto(core::GlobalState &gs) {
         }
     }
     realmain::options::Options emptyOpts;
+    emptyOpts.threads = 1; // Force 1 thread to debug crash
     unique_ptr<const OwnedKeyValueStore> kvstore;
+    fprintf(stderr, "DEBUG: populateRBIsInto creating workerpool\n");
     auto workers = WorkerPool::create(emptyOpts.threads, gs.tracer());
+    fprintf(stderr, "DEBUG: populateRBIsInto workerpool created\n");
+    fprintf(stderr, "DEBUG: populateRBIsInto calling index\n");
     auto indexed = realmain::pipeline::index(gs, absl::Span<core::FileRef>(payloadFiles), emptyOpts, *workers, kvstore);
+    fprintf(stderr, "DEBUG: populateRBIsInto index done\n");
     ENFORCE(indexed.hasResult(), "Cancelation is not supported during payload generation");
 
     // We don't run the payload with any packager options, so we can skip the packager

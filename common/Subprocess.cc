@@ -1,17 +1,20 @@
 #include "common/Subprocess.h"
 #include "common/common.h"
 #include <array>
+#include <vector>
+
+#ifndef _WIN32
 #include <fcntl.h>
 #include <spawn.h>
 #include <sstream>
-#include <string>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <vector>
+#endif
 
 using namespace std;
 
 namespace {
+#ifndef _WIN32
 class FileCloser {
 public:
     explicit FileCloser(int filedes) : filedes(filedes) {}
@@ -52,12 +55,16 @@ private:
     posix_spawn_file_actions_t fileActions;
     bool _initialized;
 };
+#endif
 } // namespace
 
 // Spawns a new child process, pipes `stdinContents` into the new processes's stdin,
 // and returns the child's stdout and status code
 optional<sorbet::Subprocess::Result> sorbet::Subprocess::spawn(string executable, vector<string> arguments,
                                                                optional<string_view> stdinContents) {
+#ifdef _WIN32
+    return nullopt;
+#else
     if constexpr (emscripten_build) {
         return nullopt;
     }
@@ -155,4 +162,5 @@ optional<sorbet::Subprocess::Result> sorbet::Subprocess::spawn(string executable
     }
 
     return sorbet::Subprocess::Result{sink.str(), WEXITSTATUS(childStatus)};
+#endif
 }

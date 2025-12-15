@@ -1,0 +1,31 @@
+--- bison/internal/toolchain.bzl
++++ bison/internal/toolchain.bzl
+@@ -31,16 +31,19 @@
+     bison_runfiles = ctx.attr.bison_tool[DefaultInfo].default_runfiles.files
+ 
+     bison_env = dict(m4.m4_env)
++    tool_path = ctx.executable.bison_tool.path
++    workspace_name = ctx.executable.bison_tool.owner.workspace_name
++
+     if "M4" not in bison_env:
+-        bison_env["M4"] = "{}.runfiles/{}/{}".format(
+-            ctx.executable.bison_tool.path,
+-            ctx.executable.bison_tool.owner.workspace_name,
+-            m4.m4_tool.executable.short_path,
+-        )
++        if tool_path.lower().endswith(".exe"):
++            bison_env["M4"] = m4.m4_tool.executable.path
++        else:
++            bison_env["M4"] = "{}.runfiles/{}/{}".format(tool_path, workspace_name, m4.m4_tool.executable.short_path)
+ 
+-    bison_env["BISON_PKGDATADIR"] = "{}.runfiles/{}/data".format(
+-        ctx.executable.bison_tool.path,
+-        ctx.executable.bison_tool.owner.workspace_name,
+-    )
++    if tool_path.lower().endswith(".exe"):
++        bison_env["BISON_PKGDATADIR"] = "external/{}/data".format(workspace_name)
++    else:
++        bison_env["BISON_PKGDATADIR"] = "{}.runfiles/{}/data".format(tool_path, workspace_name)
++
+     bison_env.update(ctx.attr.bison_env)
+ 

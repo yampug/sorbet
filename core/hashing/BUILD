@@ -11,7 +11,10 @@ cc_library(
     ),
     hdrs = glob(["*.h"]),
     # This option is required to turn on the XXH_INLINE_ALL flag for xxHash.
-    copts = ["-Wno-implicit-fallthrough"],
+    copts = select({
+        "@platforms//os:windows": [],
+        "//conditions:default": ["-Wno-implicit-fallthrough"],
+    }),
     linkstatic = select({
         "//tools/config:linkshared": 0,
         "//conditions:default": 1,

@@ -2,6 +2,10 @@
 #define SORBET_COUNTERS_H
 #include "absl/container/flat_hash_map.h"
 #include "common/strings/ConstExprStr.h"
+#include <cstddef>
+
+namespace sorbet {
+}
 #include "sorbet_version/sorbet_version.h"
 #include "spdlog/spdlog.h"
 #include <string>
@@ -82,6 +86,7 @@ CounterState getAndClearThreadCounters();
 void counterConsume(CounterState cs);
 CounterState mergeCounters(CounterState counters);
 
+// Debugging: check if ConstExprStr_Internal is known
 void prodCounterInc(ConstExprStr counter);
 void prodCounterAdd(ConstExprStr counter, unsigned long value);
 void prodCounterSet(ConstExprStr counter, unsigned long value);

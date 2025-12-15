@@ -1,6 +1,6 @@
 #include "common.h"
 
-#ifndef EMSCRIPTEN
+#if !defined(EMSCRIPTEN) && !defined(_WIN32)
 #include <execinfo.h>
 #include <string>
 
@@ -59,6 +59,10 @@ void sorbet::Exception::printBacktrace() noexcept {}
 #endif // ifndef EMSCRIPTEN
 void sorbet::Exception::failInFuzzer() noexcept {
     if constexpr (fuzz_mode) {
+#ifdef _WIN32
+        __debugbreak();
+#else
         __builtin_trap();
+#endif
     }
 }

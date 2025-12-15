@@ -230,7 +230,7 @@ public:
     Tag tag() const noexcept {
         ENFORCE_NO_TIMER(store != 0);
 
-        auto value = reinterpret_cast<tagged_storage>(store) & TAG_MASK;
+        auto value = store & TAG_MASK;
         return static_cast<Tag>(value);
     }
 

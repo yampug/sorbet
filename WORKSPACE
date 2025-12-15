@@ -5,6 +5,16 @@ load("//third_party:externals.bzl", "register_sorbet_dependencies")
 
 register_sorbet_dependencies()
 
+load("@bazel_features//:deps.bzl", "bazel_features_deps")
+
+bazel_features_deps()
+
+load("@rules_shell//shell:repositories.bzl", "rules_shell_dependencies", "rules_shell_toolchains")
+
+rules_shell_dependencies()
+
+rules_shell_toolchains()
+
 load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
 
 # We need to explicitly pull in make here for rules_foreign_cc
@@ -82,11 +92,7 @@ m4_register_toolchains()
 
 load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 
-bison_register_toolchains(
-    # Clang 12+ introduced this flag. All versions of Bison at time of writing
-    # (up to 3.7.6) include code flagged by this warning.
-    extra_copts = ["-Wno-implicit-const-int-float-conversion"],
-)
+bison_register_toolchains()
 
 load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
 

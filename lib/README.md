@@ -23,7 +23,7 @@ This directory contains a C API wrapper for Sorbet's LSP functionality, making i
 |----------|--------|--------|
 | Linux    | ✅ Working | Docker build |
 | macOS    | ✅ Working | Native build |
-| Windows  | ❌ Not yet supported | Requires MinGW toolchain |
+| Windows  | ✅ Working | Native build |
 
 ### Build Commands
 

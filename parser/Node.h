@@ -149,7 +149,11 @@ inline NodeVec NodeVec1(std::unique_ptr<Node> node) {
     return result;
 }
 
+} // namespace sorbet::parser
+
+#ifdef Yield
+#undef Yield
+#endif
 #include "parser/Node_gen.h"
-}; // namespace sorbet::parser
 
 #endif

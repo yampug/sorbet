@@ -30,7 +30,7 @@ string addSourceURLToTypedLine(string originalSource, string url) {
 }
 
 void emit_classfile(vector<string> sourceFiles, ostream &out) {
-    out << "#include<string_view>" << '\n' << "#include<vector>\nusing namespace std;\n";
+    out << "#include<string_view>" << '\n' << "#include<vector>\n#include<iomanip>\nusing namespace std;\n";
     out << "namespace sorbet{" << '\n' << "namespace rbi{" << '\n';
     string version;
     if (sorbet_is_release_build) {
@@ -40,11 +40,17 @@ void emit_classfile(vector<string> sourceFiles, ostream &out) {
     }
     for (auto &file : sourceFiles) {
         string permalink = "https://github.com/sorbet/sorbet/tree/" + version + "/" + file;
+        string content = addSourceURLToTypedLine(sorbet::FileOps::read(file.c_str()), permalink);
         out << "  string_view " + sourceName2funcName(file) << "() {" << '\n';
-        out << "  return \"" + absl::CEscape(addSourceURLToTypedLine(sorbet::FileOps::read(file.c_str()), permalink)) +
-                   "\"sv;"
-            << '\n'
-            << "}" << '\n';
+        out << "    static const char data[] = {\n";
+        out << hex;
+        for (unsigned char c : content) {
+            out << "0x" << (int)c << ", ";
+        }
+        out << "0};\n";
+        out << dec;
+        out << "    return string_view(data, " << content.size() << ");\n";
+        out << "  }" << '\n';
     }
     out << "vector<pair<string_view, string_view> > all() {" << '\n';
     out << "  vector<pair<string_view, string_view> > result;" << '\n';
