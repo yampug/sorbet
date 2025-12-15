@@ -7,7 +7,7 @@ startup --host_jvm_args=-Xmx3072m # we need at least 3G to reliably build, the d
 
 # Disable Bzlmod to use WORKSPACE instead
 common --noenable_bzlmod
-common --enable_workspace
+# common --enable_workspace  # Not supported on macOS
 
 # enable https://github.com/google/googletest/pull/1653
 common:build --define absl=1
