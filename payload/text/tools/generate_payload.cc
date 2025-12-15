@@ -42,14 +42,14 @@ void emit_classfile(vector<string> sourceFiles, ostream &out) {
         string permalink = "https://github.com/sorbet/sorbet/tree/" + version + "/" + file;
         string content = addSourceURLToTypedLine(sorbet::FileOps::read(file.c_str()), permalink);
         out << "  string_view " + sourceName2funcName(file) << "() {" << '\n';
-        out << "    static const char data[] = {\n";
+        out << "    static const unsigned char data[] = {\n";
         out << hex;
         for (unsigned char c : content) {
             out << "0x" << (int)c << ", ";
         }
         out << "0};\n";
         out << dec;
-        out << "    return string_view(data, " << content.size() << ");\n";
+        out << "    return string_view(reinterpret_cast<const char*>(data), " << content.size() << ");\n";
         out << "  }" << '\n';
     }
     out << "vector<pair<string_view, string_view> > all() {" << '\n';

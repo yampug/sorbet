@@ -5,6 +5,10 @@ load("//third_party:externals.bzl", "register_sorbet_dependencies")
 
 register_sorbet_dependencies()
 
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
+
 load("@bazel_features//:deps.bzl", "bazel_features_deps")
 
 bazel_features_deps()

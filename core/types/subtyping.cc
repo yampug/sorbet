@@ -1572,7 +1572,7 @@ bool Types::isSubType(const GlobalState &gs, const TypePtr &t1, const TypePtr &t
 template <class T>
 bool Types::isSubTypeUnderConstraint(const GlobalState &gs, TypeConstraint &constr, const TypePtr &t1,
                                      const TypePtr &t2, UntypedMode mode, T &errorDetailsCollector) {
-    constexpr auto shouldAddErrorDetails = std::is_same_v<T, ErrorSection::Collector>;
+    [[maybe_unused]] constexpr auto shouldAddErrorDetails = std::is_same_v<T, ErrorSection::Collector>;
 
     if (t1 == t2) {
         return true;

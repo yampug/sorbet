@@ -180,7 +180,7 @@ pm_call_node_t *Factory::createCallNode(pm_node_t *receiver, pm_constant_id_t me
 }
 
 pm_node_t *Factory::SymbolFromConstant(core::LocOffsets nameLoc, pm_constant_id_t nameId) const {
-    auto nameView = m_parser.resolveConstant(nameId);
+    [[maybe_unused]] auto nameView = m_parser.resolveConstant(nameId);
 
     pm_symbol_node_t *symbolNode = allocateNode<pm_symbol_node_t>();
 

@@ -5,6 +5,9 @@
 try-import .bazelrc.local
 startup --host_jvm_args=-Xmx3072m # we need at least 3G to reliably build, the default is to use 1/4 of memory, which makes flaky on 8G boxes
 
+# Disable Bzlmod to use WORKSPACE instead
+common --noenable_bzlmod
+
 # enable https://github.com/google/googletest/pull/1653
 common:build --define absl=1
 common:test --test_env=GTEST_INSTALL_FAILURE_SIGNAL_HANDLER=1
@@ -34,38 +37,34 @@ build --incompatible_strict_action_env
 
 # C / C++ Options
 # Don't depend on system compiler
-# MSVC flags
-build --cxxopt=/std:c++20 --host_cxxopt=/std:c++20
-build --cxxopt=/Zc:__cplusplus --host_cxxopt=/Zc:__cplusplus
-build --copt=/utf-8 --host_copt=/utf-8
+build --cxxopt=-std=c++17 --host_cxxopt=-std=c++17
 
+build --copt=-fno-omit-frame-pointer
 
+build --copt=-fstack-protector
 
-# build --copt=-fno-omit-frame-pointer
-# build --copt=-fstack-protector
+build --copt=-Werror --copt=-Wimplicit-fallthrough --copt=-Wmissing-field-initializers
 
-# build --copt=-Werror --copt=-Wimplicit-fallthrough --copt=-Wmissing-field-initializers
+build --copt=-D_LIBCPP_ENABLE_NODISCARD
 
-# build --copt=-D_LIBCPP_ENABLE_NODISCARD
-
-build --host_copt=/Od
-
-# build --host_cxxopt=-Wno-unused-variable --host_cxxopt=-Wno-overloaded-virtual --host_cxxopt=-Wno-unused-const-variable # ragel violates those and we want a silent build
-# build --host_cxxopt=-Wno-pass-failed # host build doesn't have enough optimizations enabled for clang to vectorize this loop reliably
+build --host_copt=-O1
+build --host_copt=-DFORCE_DEBUG
+build --host_cxxopt=-Wno-unused-variable --host_cxxopt=-Wno-overloaded-virtual --host_cxxopt=-Wno-unused-const-variable # ragel violates those and we want a silent build
+build --host_cxxopt=-Wno-pass-failed # host build doesn't have enough optimizations enabled for clang to vectorize this loop reliably
 
 # The MacOS CROSSTOOL in bazel defines _FORTIFY_SOURCE both on
 # <command line>:1:9: and <built-in>:355:9: so sadly we turn them all off
-# build --copt=-Wno-macro-redefined
+build --copt=-Wno-macro-redefined
 
-# build --host_cxxopt=-Wno-deprecated-anon-enum-enum-conversion
-# build --host_cxxopt=-Wno-deprecated-enum-enum-conversion
-# build --cxxopt=-Wno-deprecated-anon-enum-enum-conversion
-# build --cxxopt=-Wno-deprecated-enum-enum-conversion
-# build --cxxopt=-Wno-ambiguous-reversed-operator
+build --host_cxxopt=-Wno-deprecated-anon-enum-enum-conversion
+build --host_cxxopt=-Wno-deprecated-enum-enum-conversion
+build --cxxopt=-Wno-deprecated-anon-enum-enum-conversion
+build --cxxopt=-Wno-deprecated-enum-enum-conversion
+build --cxxopt=-Wno-ambiguous-reversed-operator
 
 # TODO(jez) Something between Clang 12 and Clang 15 seems to have introduced a
 # warning saying _never_ use unqualified `std` calls...
-# build --cxxopt=-Wno-unqualified-std-cast-call --host_cxxopt=-Wno-unqualified-std-cast-call
+build --cxxopt=-Wno-unqualified-std-cast-call --host_cxxopt=-Wno-unqualified-std-cast-call
 
 ##
 ## debug configuration
@@ -74,7 +73,12 @@ build:dbg --copt=-O0
 build:dbg --compilation_mode=dbg
 build:dbg --config=debugsymbols
 
-build:windows --copt=/D_CRT_SECURE_NO_WARNINGS --copt=/D_CRT_SECURE_NO_DEPRECATE --copt=/DWIN32_LEAN_AND_MEAN=1 --copt=/Zc:preprocessor --copt=-DTRANSIENT_HEAP_CHECK_MODE --copt=-DRGENGC_CHECK_MODE --copt=-DENC_DEBUG --cxxopt=/std:c++20 --host_cxxopt=/std:c++20
+# Windows MSVC-specific flags
+build:windows --cxxopt=/std:c++20 --host_cxxopt=/std:c++20
+build:windows --cxxopt=/Zc:__cplusplus --host_cxxopt=/Zc:__cplusplus
+build:windows --copt=/utf-8 --host_copt=/utf-8
+build:windows --host_copt=/Od
+build:windows --copt=/D_CRT_SECURE_NO_WARNINGS --copt=/D_CRT_SECURE_NO_DEPRECATE --copt=/DWIN32_LEAN_AND_MEAN=1 --copt=/Zc:preprocessor --copt=-DTRANSIENT_HEAP_CHECK_MODE --copt=-DRGENGC_CHECK_MODE --copt=-DENC_DEBUG
 build:windows --linkopt=/STACK:33554432
 
 build:rubydbg --copt=-DRUBY_DEBUG --copt=-DVM_CHECK_MODE=1 --copt=-DTRANSIENT_HEAP_CHECK_MODE --copt=-DRGENGC_CHECK_MODE --copt=-DENC_DEBUG

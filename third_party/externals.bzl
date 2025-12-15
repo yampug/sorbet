@@ -16,6 +16,19 @@ def register_sorbet_dependencies():
     )
 
     http_archive(
+        name = "rules_java",
+        url = "https://github.com/bazelbuild/rules_java/releases/download/7.11.1/rules_java-7.11.1.tar.gz",
+        sha256 = "6f3ce0e9fba979a844faba2d60467843fbf5191d8ca61fa3d2ea17655b56bb8c",
+    )
+
+    http_archive(
+        name = "rules_python",
+        url = "https://github.com/bazelbuild/rules_python/releases/download/0.31.0/rules_python-0.31.0.tar.gz",
+        sha256 = "c68bdc4fbec25de5b5493b8819cfc877c4ea299c0dcb15c244c5a00208cde311",
+        strip_prefix = "rules_python-0.31.0",
+    )
+
+    http_archive(
         name = "prism",
         url = "https://github.com/ruby/prism/releases/download/v1.6.0/libprism-src.tar.gz",
         sha256 = "a643517b910c510c998a518e45a66f7f3460e5b32f80d64aa0021fed7c967d0f",
@@ -30,7 +43,7 @@ def register_sorbet_dependencies():
         strip_prefix = "ragel-6.10",
         build_file = "@com_stripe_ruby_typer//third_party:ragel.BUILD",
         patch_cmds = [
-            "sed -i 's|#include <unistd.h>|#ifdef _WIN32\\n#include <io.h>\\n#include <process.h>\\n#else\\n#include <unistd.h>\\n#endif|' ragel/main.cpp",
+            "perl -i -pe 's|#include <unistd.h>|#ifdef _WIN32\\n#include <io.h>\\n#include <process.h>\\n#else\\n#include <unistd.h>\\n#endif|' ragel/main.cpp",
             "mkdir -p bin",
             "echo 'cc_binary(name = \"ragel\", visibility = [\"//visibility:public\"], deps = [\"//:ragel_lib\"])' > bin/BUILD",
             "mkdir -p stub-config",
@@ -84,9 +97,12 @@ def register_sorbet_dependencies():
     # This statement defines the @com_google_protobuf repo.
     http_archive(
         name = "com_google_protobuf",
-        url = "https://github.com/protocolbuffers/protobuf/releases/download/v29.1/protobuf-29.1.tar.gz",
-        sha256 = "3d32940e975c4ad9b8ba69640e78f5527075bae33ca2890275bf26b853c0962c",
-        strip_prefix = "protobuf-29.1",
+        url = "https://github.com/protocolbuffers/protobuf/archive/v3.27.0.zip",
+        sha256 = "913530eba097b17f58b9087fe9c4944de87b56913e3e340b91e317d1e6763dde",
+        strip_prefix = "protobuf-3.27.0",
+        patches = [
+            "@com_stripe_ruby_typer//third_party:com_google_protobuf/cpp_opts.bzl.patch",
+        ],
     )
 
     http_archive(
@@ -107,7 +123,7 @@ def register_sorbet_dependencies():
             "@com_stripe_ruby_typer//third_party:lmdb/strdup.patch",
         ],
         patch_cmds = [
-            "sed -i '1i #ifdef _WIN32\\n#define MDB_USE_ROBUST 0\\n#include <windows.h>\\ntypedef LONG NTSTATUS;\\n#endif' libraries/liblmdb/mdb.c",
+            "perl -i -pe 'print \"#ifdef _WIN32\\n#define MDB_USE_ROBUST 0\\n#include <windows.h>\\ntypedef LONG NTSTATUS;\\n#endif\\n\" if $. == 1' libraries/liblmdb/mdb.c",
         ],
     )
 
@@ -210,19 +226,6 @@ def register_sorbet_dependencies():
         urls = ["https://github.com/bazelbuild/rules_cc/releases/download/0.0.17/rules_cc-0.0.17.tar.gz"],
         sha256 = "abc605dd850f813bb37004b77db20106a19311a96b2da1c92b789da529d28fe1",
         strip_prefix = "rules_cc-0.0.17",
-    )
-
-    http_archive(
-        name = "rules_java",
-        urls = ["https://github.com/bazelbuild/rules_java/releases/download/9.3.0/rules_java-9.3.0.tar.gz"],
-        sha256 = "6ef26d4f978e8b4cf5ce1d47532d70cb62cd18431227a1c8007c8f7843243c06",
-    )
-
-    http_archive(
-        name = "rules_python",
-        url = "https://github.com/bazelbuild/rules_python/releases/download/1.7.0/rules_python-1.7.0.tar.gz",
-        sha256 = "f609f341d6e9090b981b3f45324d05a819fd7a5a56434f849c761971ce2c47da",
-        strip_prefix = "rules_python-1.7.0",
     )
 
     http_archive(
