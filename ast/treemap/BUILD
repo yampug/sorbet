@@ -11,6 +11,7 @@ cc_library(
             # workaround https://github.com/flycheck/flycheck/issues/248 in emacs
             "flycheck_*",
         ],
+        allow_empty = True,
     ),
     hdrs = [
         "treemap.h",

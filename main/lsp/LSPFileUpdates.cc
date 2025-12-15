@@ -94,10 +94,10 @@ class NameHashOutputIterator final {
 public:
     using container_type = vector<core::WithoutUniqueNameHash>;
 
-    NameHashOutputIterator(container_type &container) : container{container} {}
+    NameHashOutputIterator(container_type &container) : container{&container} {}
 
     NameHashOutputIterator &operator=(const core::SymbolHash &symHash) {
-        container.emplace_back(symHash.nameHash);
+        container->emplace_back(symHash.nameHash);
         return *this;
     }
 
@@ -110,7 +110,7 @@ public:
     }
 
 private:
-    container_type &container;
+    container_type *container;
 };
 
 } // namespace

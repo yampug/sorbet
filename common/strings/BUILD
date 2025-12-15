@@ -7,6 +7,7 @@ cc_library(
         ],
         # workaround https://github.com/flycheck/flycheck/issues/248 in emacs
         exclude = ["flycheck_*"],
+        allow_empty = True,
     ),
     hdrs = [
         "ConstExprStr.h",
