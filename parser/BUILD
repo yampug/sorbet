@@ -75,10 +75,13 @@ cc_test(
     srcs = glob([
         "test/*.cc",
     ]),
-    data = glob([
-        "fixtures/*.rb",
-        "fixtures/*.rb.exp",
-    ]),
+    data = glob(
+        [
+            "fixtures/*.rb",
+            "fixtures/*.rb.exp",
+        ],
+        allow_empty = True,
+    ),
     linkstatic = select({
         "//tools/config:linkshared": 0,
         "//conditions:default": 1,
