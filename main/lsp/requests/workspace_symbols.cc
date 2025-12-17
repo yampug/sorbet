@@ -1,6 +1,6 @@
 #include "main/lsp/requests/workspace_symbols.h"
-#include "common/timers/Timer.h"
 #include "common/sort/sort.h"
+#include "common/timers/Timer.h"
 #include "core/lsp/QueryResponse.h"
 #include "main/lsp/LSPLoop.h"
 #include "main/lsp/ShowOperation.h"
@@ -12,13 +12,21 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <vector>
+
+#include <string_view>
 
 using namespace std;
 
 namespace sorbet::realmain::lsp {
 
 namespace {
-#if 0
+struct PartialMatch {
+    uint32_t score = 0;
+    string_view::const_iterator matchEnd = nullptr;
+};
+
+class SymbolMatcher {
 public:
     static constexpr size_t MAX_RESULTS = 50;
     static constexpr size_t MAX_LOCATIONS_PER_SYMBOL = 10;
@@ -322,7 +330,6 @@ vector<unique_ptr<SymbolInformation>> SymbolMatcher::doQuery(string_view query_v
     ENFORCE(results.size() <= maxResults);
     return results;
 }
-#endif
 } // namespace
 
 WorkspaceSymbolsTask::WorkspaceSymbolsTask(const LSPConfiguration &config, MessageId id,
@@ -337,9 +344,9 @@ unique_ptr<ResponseMessage> WorkspaceSymbolsTask::runRequest(LSPTypecheckerDeleg
     Timer timeit(typechecker.state().tracer(), "LSPLoop::handleWorkspaceSymbols");
     auto response = make_unique<ResponseMessage>("2.0", id, LSPMethod::WorkspaceSymbol);
     // STUBBED out for Windows build due to MSVC compilation issues with structured bindings and std::array
-    // ShowOperation op(config, ShowOperation::Kind::References);
-    // SymbolMatcher matcher(config, typechecker.state());
-    // response->result = matcher.doQuery(params->query);
+    ShowOperation op(config, ShowOperation::Kind::References);
+    SymbolMatcher matcher(config, typechecker.state());
+    response->result = matcher.doQuery(params->query);
     return response;
 }
 } // namespace sorbet::realmain::lsp

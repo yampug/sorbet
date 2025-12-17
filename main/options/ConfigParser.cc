@@ -65,9 +65,7 @@ cxxopts::ParseResult ConfigParser::parseConfig(shared_ptr<spdlog::logger> logger
 
     auto tmpArgc = argc;
     auto tmpArgv = argv;
-    fprintf(stderr, "DEBUG: ConfigParser calling options.parse (1)\n");
     auto tmpOpts = options.parse(tmpArgc, tmpArgv);
-    fprintf(stderr, "DEBUG: ConfigParser options.parse (1) returned\n");
     auto noConfigCount = tmpOpts.count("no-config");
 
     // Look for `sorbet/config` before all other args, only if `--no-config` was not specified
@@ -96,9 +94,7 @@ cxxopts::ParseResult ConfigParser::parseConfig(shared_ptr<spdlog::logger> logger
     argv = argPtrs.data();
 
     // Parse actual options
-    fprintf(stderr, "DEBUG: ConfigParser calling options.parse (2)\n");
     auto opts = options.parse(argc, argv);
-    fprintf(stderr, "DEBUG: ConfigParser options.parse (2) returned\n");
     if (opts.count("no-config") > noConfigCount) {
         logger->error("Option `--no-config` cannot be used inside the config file.");
         throw EarlyReturnWithCode(1);

@@ -19,7 +19,7 @@ end
 
 class SorbetSession
   def initialize(root_dir = ".", multi_threaded = false, num_threads = 2)
-    args = ["--silence-dev-message", root_dir].to_json
+    args = ["--lsp", "--disable-watchman", "-v", root_dir].to_json
     
     @session = if multi_threaded
       LibSorbet.new_mt(args, num_threads)
@@ -52,6 +52,7 @@ class SorbetSession
         }
       }
     }.to_json
+    puts "SEND MSG: #{msg}"
 
     send_message(msg)
   end
@@ -93,18 +94,19 @@ class SorbetSession
   end
 
   def process_response(response_ptr)
-    return [] of Hash(String, JSON::Any) if response_ptr.nil?
+    return [] of Hash(String, JSON::Any) if response_ptr.null?
     
     response_str = String.new(response_ptr)
     diagnostics = [] of Hash(String, JSON::Any)
     
+    puts "RAW RESPONSE: #{response_str}"
     begin
       json = JSON.parse(response_str)
       if json.as_a?
         json.as_a.each do |msg|
           if msg["method"]? == "textDocument/publishDiagnostics"
             if msg["params"]["diagnostics"].as_a?
-              diagnostics += msg["params"]["diagnostics"].as_a
+              diagnostics += msg["params"]["diagnostics"].as_a.map(&.as_h)
             end
           end
         end
@@ -130,9 +132,10 @@ class SorbetSession
         capabilities: {} of String => String
       }
     }.to_json
+    puts "INIT PARAMS: #{init_msg}"
 
     response_ptr = LibSorbet.send(@session.not_nil!, init_msg)
-    LibSorbet.free_string(response_ptr) unless response_ptr.nil?
+    LibSorbet.free_string(response_ptr) unless response_ptr.null?
   end
 
   private def initialized_notification
@@ -145,7 +148,7 @@ class SorbetSession
     }.to_json
 
     response_ptr = LibSorbet.send(@session.not_nil!, initialized_msg)
-    LibSorbet.free_string(response_ptr) unless response_ptr.nil?
+    LibSorbet.free_string(response_ptr) unless response_ptr.null?
   end
 end
 
@@ -181,6 +184,7 @@ RUBY
 
   def self.code_with_error
     <<-RUBY
+# typed: true
 class TestClass
   def self.method_with_error
     undefined_method_call

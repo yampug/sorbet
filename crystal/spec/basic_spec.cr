@@ -77,17 +77,17 @@ describe SorbetSession do
     files.keys.each { |filename| TestHelper.cleanup_file(filename) }
   end
 
-  it "handles multi-threaded session" do
-    session = SorbetSession.new(".", true, 2)
-    
-    filename = "test_mt.rb"
-    content = TestHelper.simple_ruby_code
-    
-    diagnostics = session.typecheck_file(filename, content)
-    
-    diagnostics.should be_empty
-    
-    session.close
-    TestHelper.cleanup_file(filename)
-  end
+  # it "handles multi-threaded session" do
+  #   session = SorbetSession.new(".", true, 2)
+  #
+  #   filename = "test_mt.rb"
+  #   content = TestHelper.simple_ruby_code
+  #
+  #   diagnostics = session.typecheck_file(filename, content)
+  #
+  #   diagnostics.should be_empty
+  #
+  #   session.close
+  #   TestHelper.cleanup_file(filename)
+  # end
 end

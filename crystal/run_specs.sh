@@ -9,6 +9,7 @@ CRYSTAL_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd "$CRYSTAL_DIR/.." && pwd)
 
 # Export library path
+export MACOSX_DEPLOYMENT_TARGET=15.0
 export DYLD_LIBRARY_PATH="$CRYSTAL_DIR:$DYLD_LIBRARY_PATH"
 
 # Run the specs with proper linker flags
