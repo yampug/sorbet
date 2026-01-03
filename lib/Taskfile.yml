@@ -40,16 +40,10 @@ tasks:
       - echo "macOS builds via Docker not fully supported - use native Linux Docker build instead"
 
   build:linux:
-    desc: Build libsorbet for Linux (.so) using Docker
-    deps: [docker:build]
+    desc: Build libsorbet for Linux (.so)
     cmds:
       - mkdir -p ../dist/linux
-      - |
-        docker run --rm \
-          -v {{.ROOT_DIR}}/..:/workspace \
-          -w /workspace \
-          {{.DOCKER_IMAGE}} \
-          bash -c "bazel build {{.BUILD_TARGET}}.so && cp -f bazel-bin/lib/libsorbet.so dist/linux/"
+      - bazel build {{.BUILD_TARGET}}.so && cp -f ../bazel-bin/lib/libsorbet.so ../dist/linux/
     sources:
       - sorbet_c_api.cc
       - BUILD
