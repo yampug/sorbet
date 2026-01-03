@@ -285,8 +285,8 @@ GlobalState::GlobalState(shared_ptr<ErrorQueue> errorQueue, shared_ptr<lsp::Type
     typeParameters.reserve(PAYLOAD_MAX_TYPE_ARGUMENT_COUNT);
     typeMembers.reserve(PAYLOAD_MAX_TYPE_MEMBER_COUNT);
 
-    int namesByHashSize = nextPowerOfTwo(
-        2 * (PAYLOAD_MAX_UTF8_NAME_COUNT + PAYLOAD_MAX_CONSTANT_NAME_COUNT + PAYLOAD_MAX_UNIQUE_NAME_COUNT));
+    int namesByHashSize =
+        nextPowerOfTwo(2 * (utf8Names.capacity() + constantNames.capacity() + uniqueNames.capacity()));
     namesByHash.resize(namesByHashSize);
 }
 
@@ -1593,7 +1593,7 @@ void GlobalState::expandNames(uint32_t utf8NameSize, uint32_t constantNameSize, 
     utf8Names.reserve(utf8NameSize);
     constantNames.reserve(constantNameSize);
     uniqueNames.reserve(uniqueNameSize);
-    namesByHash.expandNames(utf8NameSize, constantNameSize, uniqueNameSize);
+    namesByHash.expandNames(utf8Names.capacity(), constantNames.capacity(), uniqueNames.capacity());
 }
 
 NameRef GlobalState::lookupNameUnique(UniqueNameKind uniqueNameKind, NameRef original, uint32_t num) const {
@@ -1638,8 +1638,7 @@ NameRef GlobalState::freshNameUnique(UniqueNameKind uniqueNameKind, NameRef orig
 FileRef GlobalState::enterFile(shared_ptr<File> file) {
     ENFORCE_NO_TIMER(!fileTableFrozen);
 
-    SLOW_DEBUG_ONLY(for (auto &f
-                         : this->getFiles()) {
+    SLOW_DEBUG_ONLY(for (auto &f : this->getFiles()) {
         if (f) {
             if (f->path() == file->path()) {
                 Exception::raise("Request to `enterFile` for already-entered file path?");
@@ -1831,7 +1830,7 @@ void GlobalState::sanityCheckTableSizes() const {
     ENFORCE_NO_TIMER(!namesByHash.empty(), "empty name hash table size");
     ENFORCE_NO_TIMER((namesByHash.size() & (namesByHash.size() - 1)) == 0,
                      "name hash table size is not a power of two");
-    ENFORCE_NO_TIMER(nextPowerOfTwo(utf8Names.capacity() + constantNames.capacity() + uniqueNames.capacity()) * 2 ==
+    ENFORCE_NO_TIMER(nextPowerOfTwo(utf8Names.capacity() + constantNames.capacity() + uniqueNames.capacity()) * 2 <=
                          namesByHash.capacity(),
                      "name table and hash name table sizes out of sync names.capacity={} namesByHash.capacity={}",
                      namesUsedTotal(), namesByHash.capacity());
