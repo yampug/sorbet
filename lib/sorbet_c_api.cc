@@ -24,7 +24,7 @@
 #ifdef _WIN32
     #define SORBET_API __declspec(dllexport)
 #else
-    #define SORBET_API
+    #define SORBET_API __attribute__((visibility("default")))
 #endif
 
 extern "C" {

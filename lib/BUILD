@@ -2,6 +2,7 @@
 cc_binary(
     name = "libsorbet.dylib",
     srcs = ["sorbet_c_api.cc"],
+    additional_linker_inputs = ["exported.exp"],
     linkshared = True,
     deps = [
         "//main/lsp",
@@ -11,6 +12,8 @@ cc_binary(
         "@rapidjson",
         "@spdlog",
     ],
+    copts = ["-fvisibility=hidden"],
+    linkopts = ["-Wl,-exported_symbols_list,$(location exported.exp)"],
     visibility = ["//visibility:public"],
 )
 
