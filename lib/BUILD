@@ -21,6 +21,7 @@ cc_binary(
 cc_binary(
     name = "libsorbet.so",
     srcs = ["sorbet_c_api.cc"],
+    additional_linker_inputs = ["sorbet.version"],
     linkshared = True,
     deps = [
         "//main/lsp",
@@ -30,6 +31,8 @@ cc_binary(
         "@rapidjson",
         "@spdlog",
     ],
+    copts = ["-fvisibility=hidden"],
+    linkopts = ["-Wl,--version-script,$(location sorbet.version)"],
     visibility = ["//visibility:public"],
 )
 
