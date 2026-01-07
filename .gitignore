@@ -82,3 +82,5 @@ lib/output1
 lib/output3
 lib/output2
 lib/protobuf.tar.gz
+dist/
+*.md

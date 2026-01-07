@@ -51,6 +51,61 @@ tasks:
     generates:
       - ../dist/linux/libsorbet.so
 
+  build:macos:static:
+    desc: Build TRUE static library libsorbet.a (not hybrid)
+    cmds:
+      - echo "🔨 Building Sorbet with static linking configuration..."
+      - bazel build //lib:libsorbet_static
+      - mkdir -p ../dist/macos
+      - |
+        # Find the actual built library (bazel-bin symlink may not exist)
+        STATIC_LIB=$(find /private/var/tmp/_bazel_* -path "*/darwin_arm64-fastbuild/bin/lib/libsorbet.a" 2>/dev/null | head -1)
+        if [ -n "$STATIC_LIB" ]; then
+          cp -f "$STATIC_LIB" ../dist/macos/
+          echo "✅ Built: ../dist/macos/libsorbet.a"
+        else
+          echo "❌ Error: Could not find libsorbet.a"
+          exit 1
+        fi
+    sources:
+      - sorbet_c_api.cc
+      - BUILD
+    generates:
+      - ../dist/macos/libsorbet.a
+
+  build:linux:static:
+    desc: Build TRUE static library libsorbet.a for Linux
+    cmds:
+      - echo "🔨 Building Sorbet (Linux) with static linking configuration..."
+      - bazel build //lib:libsorbet_static
+      - mkdir -p ../dist/linux
+      - |
+        # Use bazel info to find the output directory reliably
+        BAZEL_BIN=$(bazel info bazel-bin)
+        STATIC_LIB="$BAZEL_BIN/lib/libsorbet.a"
+        if [ -f "$STATIC_LIB" ]; then
+          cp -f "$STATIC_LIB" ../dist/linux/
+          echo "✅ Built: ../dist/linux/libsorbet.a"
+        else
+          echo "❌ Error: Could not find libsorbet.a at $STATIC_LIB"
+          # Fallback search if bazel info fails or path differs
+          FOUND=$(find ../bazel-out -name libsorbet.a | grep "bin/lib/libsorbet.a" | head -1)
+          if [ -n "$FOUND" ]; then
+             cp -f "$FOUND" ../dist/linux/
+             echo "✅ Built (via fallback): ../dist/linux/libsorbet.a"
+          else
+             exit 1
+          fi
+        fi
+
+        echo "✅ Built: ../dist/linux/libsorbet.a"
+        ls -lh ../dist/linux/libsorbet.a
+    sources:
+      - sorbet_c_api.cc
+      - BUILD
+    generates:
+      - ../dist/linux/libsorbet.a
+
   build:windows:
     desc: Build libsorbet for Windows (.dll)
     cmds:
