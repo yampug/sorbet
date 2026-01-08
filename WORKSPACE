@@ -1,6 +1,7 @@
 workspace(name = "com_stripe_ruby_typer")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
 load("//third_party:externals.bzl", "register_sorbet_dependencies")
 
 register_sorbet_dependencies()

@@ -118,6 +118,19 @@ tasks:
     generates:
       - ../dist/windows/libsorbet.dll
 
+  build:windows:static:
+    desc: Build TRUE static library libsorbet.lib for Windows
+    cmds:
+      - mkdir -p ../dist/windows
+      - bazel build --enable_workspace --action_env=PATH //lib:libsorbet_static_windows
+      - cp -f ../bazel-bin/lib/libsorbet.lib ../dist/windows/libsorbet.lib
+      - echo "Built ../dist/windows/libsorbet.lib"
+    sources:
+      - sorbet_c_api.cc
+      - BUILD
+    generates:
+      - ../dist/windows/libsorbet.lib
+
   build:all:
     desc: Build libsorbet for all supported platforms
     cmds:

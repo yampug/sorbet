@@ -7,7 +7,7 @@ startup --host_jvm_args=-Xmx3072m # we need at least 3G to reliably build, the d
 
 # Disable Bzlmod to use WORKSPACE instead
 common --noenable_bzlmod
-# common --enable_workspace  # Not supported on macOS Bazel 6.5.0; Windows uses Bazel 8.4.2 and needs this uncommented locally
+common --enable_workspace  # Not supported on macOS Bazel 6.5.0; Windows uses Bazel 8.4.2 and needs this uncommented locally
 
 # enable https://github.com/google/googletest/pull/1653
 common:build --define absl=1
@@ -38,7 +38,8 @@ build --incompatible_strict_action_env
 
 # C / C++ Options
 # Don't depend on system compiler
-build --cxxopt=-std=c++17 --host_cxxopt=-std=c++17
+build --cxxopt=/std:c++17 --host_cxxopt=/std:c++17 --cxxopt=/utf-8 --host_cxxopt=/utf-8 --cxxopt=/Zc:__cplusplus --host_cxxopt=/Zc:__cplusplus
+build:windows --cxxopt=/std:c++17 --host_cxxopt=/std:c++17 --cxxopt=/utf-8 --host_cxxopt=/utf-8 --cxxopt=/Zc:__cplusplus --host_cxxopt=/Zc:__cplusplus
 
 # build --copt=-fno-omit-frame-pointer
 # 

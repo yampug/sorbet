@@ -205,3 +205,57 @@ genrule(
     """,
     visibility = ["//visibility:public"],
 )
+
+genrule(
+    name = "libsorbet_static_windows",
+    srcs = [":sorbet_all_static"],
+    outs = ["libsorbet.lib"],
+    tags = ["no-sandbox", "manual"],
+    cmd = """
+cat <<'EOF' > script.ps1
+$$ErrorActionPreference = 'Stop'
+try {
+    $$srcs = '$(locations :sorbet_all_static)'.Split(' ')
+    if ($$srcs.Count -eq 0) { throw 'No sources found' }
+    $$firstSrc = $$srcs[0]
+    
+    # Resolve bazel-bin root
+    $$root = (Get-Item $$firstSrc).Directory.Parent.Parent
+    Write-Output ("Searching for .lib files in " + $$root.FullName)
+    
+    $$libs = Get-ChildItem -Path $$root.FullName -Recurse -Filter '*.lib' | Where-Object { $$_.Name -ne 'libsorbet.lib' }
+    Write-Output ("Found " + $$libs.Count + " libraries to merge.")
+    
+    if ($$libs.Count -eq 0) { throw 'No libraries found!' }
+    
+    $$outPath = '$(location libsorbet.lib)'.Replace('/', '\\')
+    New-Item -Path (Split-Path $$outPath) -ItemType Directory -Force | Out-Null
+    if (Test-Path $$outPath) { Remove-Item $$outPath }
+    
+    $$libPaths = $$libs.FullName
+    
+    # Use response file for safety
+    $$rspPath = 'libsorbet.rsp'
+    $$rspContent = @("/OUT:$$outPath") + $$libPaths
+    Set-Content -Path $$rspPath -Value $$rspContent
+    
+    Write-Output ("Merging " + $$libs.Count + " libs to " + $$outPath)
+    
+    # Invoke lib.exe with response file
+    # Note: args passed to Start-Process with @file needs care, but direct invocation works usually.
+    # lib.exe @libsorbet.rsp
+    
+    $$p = Start-Process -FilePath "lib.exe" -ArgumentList "@$$rspPath" -Wait -NoNewWindow -PassThru
+    if ($$p.ExitCode -ne 0) { throw "lib.exe failed with exit code $$($$p.ExitCode)" }
+    
+    if (-not (Test-Path $$outPath)) { throw ("Output file not created at " + $$outPath) }
+    Write-Output "Done."
+} catch {
+    Write-Error $$_.Exception.Message
+    exit 1
+}
+EOF
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File script.ps1
+    """,
+    visibility = ["//visibility:public"],
+)
